@@ -25,4 +25,4 @@
 - CI fixed / pending verification
 
 ## Current Focus
-- API pipeline wiring + verification
+- Next Phase: Persistence + Auth

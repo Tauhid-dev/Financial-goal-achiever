@@ -29,15 +29,17 @@ from backend.app.modules.normalize.normalizer import normalize_transactions
 # Budget
 from backend.app.modules.budget.aggregator import aggregate_by_month
 from backend.app.modules.budget.analyzer import analyze_budget
+from dataclasses import asdict
 
 # Goals (optional – placeholder calls if implementations exist)
 try:
     from backend.app.modules.goals.projection import project_time_to_goal
-    from backend.app.modules.goals.simulator import simulate_goal
+    from backend.app.modules.goals.simulator import simulate
+    from backend.app.modules.goals.schema import SavingsGoal
 except Exception:
-    # Goal functions may not be implemented yet; we will skip them safely.
     project_time_to_goal = None  # type: ignore
-    simulate_goal = None  # type: ignore
+    simulate = None  # type: ignore
+    SavingsGoal = None  # type: ignore
 
 
 def _latest_month_summary(monthly_summary: Dict) -> Optional[Dict]:
@@ -47,9 +49,28 @@ def _latest_month_summary(monthly_summary: Dict) -> Optional[Dict]:
     """
     if not monthly_summary:
         return None
-    # Assuming keys are sortable month strings like "2023-07"
     latest_key = max(monthly_summary.keys())
     return monthly_summary[latest_key]
+
+
+def _goal_from_dict(goal: dict) -> Optional[SavingsGoal]:
+    """
+    Convert a raw goal dict into a SavingsGoal dataclass.
+    Missing fields get safe defaults. Returns None on any error.
+    """
+    if SavingsGoal is None:
+        return None
+    try:
+        return SavingsGoal(
+            id=goal.get("id", ""),
+            name=goal.get("name", ""),
+            target_amount=float(goal.get("target_amount", 0)),
+            current_amount=float(goal.get("current_amount", 0)),
+            monthly_contribution=float(goal.get("monthly_contribution", 0)),
+            target_date=goal.get("target_date"),
+        )
+    except Exception:
+        return None
 
 
 def process_pdf(
@@ -82,50 +103,33 @@ def process_pdf(
             "goal": Dict (optional)
         }
     """
-    # 1. Extract raw text from PDF (pure stub – returns empty string on failure)
-    # Ensure the temporary file is removed after processing (handled by caller)
     raw_text = extract_text_from_pdf(file_path)
-
-    # 2. Redact sensitive data
     redacted_text, redactions = redact_text(raw_text)
-
-    # 3. Choose a parser based on the (redacted) text
     parser = registry.get_parser_for_text(redacted_text)
-
-    # 4. Extract raw transaction dicts (fallback to empty list)
     raw_transactions: List[Dict] = parser.extract(redacted_text) if parser else []
-
-    # 5. Sanitize transactions (remove/ mask sensitive fields)
     safe_transactions = sanitize_transactions(raw_transactions)
-
-    # 6. Normalise to deterministic transaction objects
     normalized_transactions = normalize_transactions(safe_transactions)
-
-    # 7. Aggregate by month
     monthly_summary = aggregate_by_month(normalized_transactions)
-
-    # 8. Analyse budget health – use the latest month if available
     latest_summary = _latest_month_summary(monthly_summary)
     budget_health = analyze_budget(latest_summary) if latest_summary else {}
 
-    # 9. Optional goal handling
     goal_result: Dict = {}
-    if goal:
+    if goal and _goal_from_dict(goal):
+        goal_obj = _goal_from_dict(goal)
         if project_time_to_goal:
             try:
-                goal_result["projection"] = project_time_to_goal(goal, normalized_transactions)
+                goal_result["projection"] = project_time_to_goal(goal_obj)
             except Exception:
                 goal_result["projection"] = {}
-        if simulate_goal:
+        if simulate:
             try:
-                goal_result["simulation"] = simulate_goal(goal, normalized_transactions)
+                goal_result["simulation"] = simulate(goal_obj)
             except Exception:
                 goal_result["simulation"] = {}
 
-    # Assemble final payload
     return {
         "redactions": redactions,
-        "transactions_normalized": [t.dict() if hasattr(t, "dict") else t for t in normalized_transactions],
+        "transactions_normalized": [asdict(t) for t in normalized_transactions],
         "monthly_summary": monthly_summary,
         "budget_health": budget_health,
         **({"goal": goal_result} if goal_result else {}),
