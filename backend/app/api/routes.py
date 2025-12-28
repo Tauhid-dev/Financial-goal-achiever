@@ -1,16 +1,5 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from ..services.pipeline import process_pdf
-from typing import List
-
-from ..modules.models.schemas import FamilySchema, DocumentSchema
-from ..modules.normalize.schemas import NormalizedTransaction
-from ..modules.goals.schemas import GoalInput, GoalResult
-from ..modules.insight.service import InsightService
-
-# Service imports (thin wrappers around core logic)
-from ..modules.ingest.bank_statement_parser_v1 import BankStatementParserV1
-from ..modules.normalize.normalizer import TransactionNormalizer
-from ..modules.goals.engine import GoalEngine
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
 
@@ -62,36 +51,20 @@ async def upload_document(file: UploadFile = File(...)):
 # -----------------------------------------------------------------
 # Summary endpoint – uses normalization layer
 # -----------------------------------------------------------------
-@router.get("/summary/{family_id}", response_model=List[NormalizedTransaction])
+@router.get("/summary/{family_id}")
 async def get_summary(family_id: str):
-    # TODO: integrate with pipeline or DB to return actual summary.
-    # Currently returns an empty list as a placeholder.
-    raw = []  # In a real system this would be fetched from DB
-    normalized = TransactionNormalizer.batch_normalize(raw)
-    return normalized
+    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
 
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
-@router.post("/goals", response_model=GoalResult)
-async def create_goal(goal: GoalInput):
-    result = GoalEngine.evaluate(goal)
-    return result
+@router.post("/goals")
+async def create_goal(goal: dict):
+    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
 
 # -----------------------------------------------------------------
 # Insights – uses the InsightService
 # -----------------------------------------------------------------
-@router.get("/insights/{family_id}", response_model=str)
+@router.get("/insights/{family_id}")
 async def get_insights(family_id: str):
-    # Placeholder financial summary and goal result
-    financial_summary = {
-        "income": 5000.0,
-        "surplus": 500.0,
-        "savings_rate": 10.0,
-    }
-    goal_result = {
-        "required_savings_per_month": 400.0,
-        "feasible": True,
-    }
-    service = InsightService()
-    return service.explain(financial_summary, goal_result)
+    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
