@@ -1,7 +1,7 @@
 # Module Progress
 
 ## Status
- MVP backend complete (code-only)
+ MVP backend complete (code-only) — verification in progress
 
 ## Completed
 - CI added
@@ -22,9 +22,7 @@
 
 ## Partially Completed / Gaps
 - API not connected to processing pipeline
-- No tests
-- No CI
-- Memory Bank previously out of sync (now correcting)
+- CI fixed / pending verification
 
 ## Current Focus
-- Frontend planning
+- API pipeline wiring + verification
