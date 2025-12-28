@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from ..services.pipeline import process_pdf
+from backend.app.modules.models.schemas import FamilySchema, DocumentSchema
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
 
