@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from ..services.pipeline import process_pdf
 from typing import List
 
 from ..modules.models.schemas import FamilySchema, DocumentSchema
@@ -26,23 +27,45 @@ async def create_family(family: FamilySchema):
 # -----------------------------------------------------------------
 @router.post("/documents/upload", response_model=DocumentSchema)
 async def upload_document(file: UploadFile = File(...)):
-    # No raw PDF storage – parse and discard
-    parser = BankStatementParserV1()
-    raw_transactions = await parser.parse(file.file.name)  # placeholder path
-    # Return minimal document metadata
-    return DocumentSchema(
-        id="placeholder-id",
-        family_id="placeholder-family",
-        filename=file.filename,
-        uploaded_at="1970-01-01T00:00:00Z",
-    )
+    """
+    Accept a PDF upload, store it temporarily, run the processing pipeline,
+    then delete the temporary file. Returns the pipeline result alongside
+    minimal document metadata.
+    """
+    import os
+    import tempfile
+
+    # Write uploaded file to a temporary location
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            content = await file.read()
+            tmp.write(content)
+            temp_path = tmp.name
+
+        # Run the pure pipeline orchestrator
+        pipeline_result = process_pdf(temp_path)
+
+    finally:
+        # Ensure the temporary file is removed
+        if "temp_path" in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+
+    # Return document metadata plus pipeline output (as a dict)
+    return {
+        "id": "placeholder-id",
+        "family_id": "placeholder-family",
+        "filename": file.filename,
+        "uploaded_at": "1970-01-01T00:00:00Z",
+        "pipeline_result": pipeline_result,
+    }
 
 # -----------------------------------------------------------------
 # Summary endpoint – uses normalization layer
 # -----------------------------------------------------------------
 @router.get("/summary/{family_id}", response_model=List[NormalizedTransaction])
 async def get_summary(family_id: str):
-    # Placeholder: empty list of raw transactions
+    # TODO: integrate with pipeline or DB to return actual summary.
+    # Currently returns an empty list as a placeholder.
     raw = []  # In a real system this would be fetched from DB
     normalized = TransactionNormalizer.batch_normalize(raw)
     return normalized

@@ -1,9 +1,10 @@
 # Module Progress
 
 ## Status
-🚧 Core backend architecture implemented (code-only, partial wiring)
+ MVP backend complete (code-only) — verification in progress
 
 ## Completed
+- CI added
 - Project directory structure created
 - Core app skeleton initialized
 - Runtime safety & central config stubs added
@@ -15,16 +16,13 @@
 - API contracts & route stubs (FastAPI app factory, schemas, endpoints)
 - Containerization scaffolding (Dockerfile, docker-compose, env contract)
 - Health & safety endpoints (no execution)
+- Database domain models completed
+- Pipeline orchestrator wiring
+- Unit tests added
 
 ## Partially Completed / Gaps
-- Database domain models incomplete (only MonthlySummary present)
-- No end-to-end pipeline/orchestrator wiring modules together
 - API not connected to processing pipeline
-- No tests
-- No CI
-- Memory Bank previously out of sync (now correcting)
+- CI fixed / pending verification
 
 ## Current Focus
-- Complete DB domain models
-- Add pipeline orchestrator
-- Verification via tests & CI
+- API pipeline wiring + verification

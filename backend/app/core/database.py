@@ -9,16 +9,20 @@ DATABASE_URL = os.getenv(
 )
 
 # Async engine
-engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+# Lazy engine creation to avoid side‑effects at import time
+def get_engine():
+    return create_async_engine(DATABASE_URL, echo=False, future=True)
 
-# Async session factory
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+# Async session factory using lazy engine
+def get_async_sessionmaker():
+    return async_sessionmaker(
+        bind=get_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
 
 # Dependency helper for FastAPI routes
 async def get_session() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
+    async_session = get_async_sessionmaker()
+    async with async_session() as session:
         yield session
