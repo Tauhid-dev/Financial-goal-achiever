@@ -1,19 +1,39 @@
 import pytest
-# Import the projection and simulation functions directly from their modules
+from backend.app.modules.goals.schema import SavingsGoal
 from backend.app.modules.goals.projection import project_time_to_goal
 from backend.app.modules.goals.simulator import simulate
 
 def test_project_time_to_goal():
-    goal = {"target_amount": 10000, "monthly_contribution": 500}
-    # Provide a minimal list of normalized transactions (empty is fine for this stub)
-    transactions = []
-    result = project_time_to_goal(goal, transactions)
+    goal = SavingsGoal(
+        id="g1",
+        name="Test Goal",
+        target_amount=10000,
+        current_amount=0,
+        monthly_contribution=500,
+        target_date=None,
+    )
+    result = project_time_to_goal(goal)
     assert isinstance(result, dict)
-    assert "months_required" in result
+    assert isinstance(result.get("months_required"), int)
+    assert isinstance(result.get("years_required"), float)
+    assert isinstance(result.get("is_achievable"), bool)
 
 def test_simulate():
-    goal = {"target_amount": 10000, "monthly_contribution": 500}
-    transactions = []
-    result = simulate(goal, transactions)
+    goal = SavingsGoal(
+        id="g1",
+        name="Test Goal",
+        target_amount=10000,
+        current_amount=0,
+        monthly_contribution=500,
+        target_date=None,
+    )
+    result = simulate(
+        goal,
+        extra_monthly_savings=100,
+        extra_monthly_income=0,
+        reduced_monthly_expenses=0,
+    )
     assert isinstance(result, dict)
-    assert "months_required" in result
+    assert isinstance(result.get("months_required"), int)
+    assert isinstance(result.get("years_required"), float)
+    assert isinstance(result.get("is_achievable"), bool)

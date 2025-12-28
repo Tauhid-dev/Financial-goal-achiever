@@ -1,22 +1,51 @@
 import pytest
+from backend.app.modules.normalize.schema import NormalizedTransaction
 from backend.app.modules.budget.aggregator import aggregate_by_month
 from backend.app.modules.budget.analyzer import analyze_budget
 
-def test_aggregate_by_month():
-    transactions = [
-        {"date": "2023-01-15", "amount": 1000, "direction": "income"},
-        {"date": "2023-01-20", "amount": -200, "direction": "expense"},
-        {"date": "2023-02-05", "amount": 1500, "direction": "income"},
+def test_aggregate_and_analyze():
+    txns = [
+        NormalizedTransaction(
+            id="t1",
+            date="2023-01-15",
+            description="Salary",
+            amount=1000.0,
+            direction="income",
+            category="Salary",
+            subcategory=None,
+            confidence=1.0,
+        ),
+        NormalizedTransaction(
+            id="t2",
+            date="2023-01-20",
+            description="Groceries",
+            amount=-200.0,
+            direction="expense",
+            category="Food",
+            subcategory=None,
+            confidence=1.0,
+        ),
+        NormalizedTransaction(
+            id="t3",
+            date="2023-02-05",
+            description="Freelance",
+            amount=1500.0,
+            direction="income",
+            category="Side Income",
+            subcategory=None,
+            confidence=1.0,
+        ),
     ]
-    summary = aggregate_by_month(transactions)
-    assert "2023-01" in summary
-    assert "2023-02" in summary
-    assert summary["2023-01"]["income"] == 1000
-    assert summary["2023-01"]["expenses"] == 200
 
-def test_analyze_budget():
-    month_summary = {"income": 3000, "expenses": 1500, "savings_rate": 0.5}
-    result = analyze_budget(month_summary)
-    assert result["status"] in ("healthy", "warning", "critical")
-    # Ensure the result contains a numeric health score
-    assert isinstance(result["health_score"], float)
+    monthly = aggregate_by_month(txns)
+    assert "2023-01" in monthly
+    assert "2023-02" in monthly
+    assert monthly["2023-01"]["income"] == 1000.0
+    assert monthly["2023-01"]["expenses"] == 200.0
+
+    analysis = analyze_budget(monthly["2023-01"])
+    assert isinstance(analysis["savings_rate"], float)
+    assert isinstance(analysis["largest_category"], (str, type(None)))
+    assert isinstance(analysis["expense_ratio"], float)
+    assert isinstance(analysis["health_score"], float)
+    assert analysis["status"] in ("healthy", "warning", "risky", "critical")
