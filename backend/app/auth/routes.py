@@ -27,9 +27,9 @@ async def register(
         email=user.email,
         password_hash=hash_password(user.password),
     )
-    session.add(new_user)
-    await session.flush()
-    await session.commit()
+    async with session.begin():
+        session.add(new_user)
+        await session.flush()
     return UserRead.from_orm(new_user)
 
 @router.post("/login", response_model=Token)
@@ -41,7 +41,7 @@ async def login(
     user = result.scalar_one_or_none()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
-    access_token = create_access_token(subject=user.email)
+    access_token = create_access_token(subject=user.email, secret=settings.JWT_SECRET, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserRead)
