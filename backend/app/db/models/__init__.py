@@ -18,4 +18,5 @@ __all__ = [
     "Goal",
     "MonthlySummary",
     "User",
+    "Membership",
 ]
