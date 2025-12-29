@@ -5,14 +5,16 @@ from sqlalchemy import select
 from ..db.session import get_async_session
 from ..db.models import User
 from .jwt import decode_access_token
+from ..core.config import Config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+settings = Config()
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     session: AsyncSession = Depends(get_async_session),
 ) -> User:
-    payload = decode_access_token(token)
+    payload = decode_access_token(token, secret=settings.JWT_SECRET)
     email: str = payload.get("sub")
     if not email:
         raise HTTPException(
