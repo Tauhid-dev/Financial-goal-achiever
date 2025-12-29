@@ -1,14 +1,15 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
-from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, MonthlySummarySchema
+from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, MonthlySummarySchema, TransactionSchema
 from backend.app.auth.deps import get_current_user
 from backend.app.db.models import User
 from backend.app.db.session import get_async_session
 from backend.app.db.repositories.document_repo import create_document, list_documents
-from backend.app.db.repositories.transaction_repo import bulk_create_transactions
+from backend.app.db.repositories.transaction_repo import bulk_create_transactions, list_transactions, top_expense_categories
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
 from ..api.authz import assert_family_access
+from backend.app.modules.insights.deterministic import build_insights
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
 
@@ -124,5 +125,38 @@ async def create_goal(goal: dict):
 # Insights – uses the InsightService
 # -----------------------------------------------------------------
 @router.get("/insights/{family_id}")
-async def get_insights(family_id: str):
-    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
+async def get_insights(
+    family_id: str,
+    month: str | None = None,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+
+    # Determine month to use
+    if month:
+        month_to_use = month
+    else:
+        # Get latest summary month
+        summaries = await list_monthly_summaries(session, family_id)
+        month_to_use = summaries[0].month if summaries else None
+
+    # Fetch latest summary dict (or None)
+    latest_summary = None
+    if month_to_use:
+        for s in summaries:
+            if s.month == month_to_use:
+                latest_summary = {
+                    "month": s.month,
+                    "income": s.income,
+                    "expenses": s.expenses,
+                    "savings": s.savings,
+                    "savings_rate": s.savings_rate,
+                }
+                break
+
+    # Top expense categories
+    top_cats = await top_expense_categories(session, family_id, month_to_use)
+
+    # Build deterministic insights
+    return build_insights(latest_summary, top_cats)
