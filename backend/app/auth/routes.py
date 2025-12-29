@@ -7,8 +7,11 @@ from ..db.models import User
 from .security import hash_password, verify_password
 from .jwt import create_access_token
 from .schemas import UserCreate, UserRead, Token
+from .deps import get_current_user
+from ..core.config import Config
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+settings = Config()
 
 @router.post("/register", response_model=UserRead)
 async def register(

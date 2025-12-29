@@ -7,6 +7,7 @@ from ..models.document import Document
 from ..models.transaction import Transaction
 from ..models.goal import Goal
 from ..models.monthly_summary import MonthlySummary
+from ..models.user import User
 
 __all__ = [
     "Family",
@@ -15,4 +16,5 @@ __all__ = [
     "Transaction",
     "Goal",
     "MonthlySummary",
+    "User",
 ]
