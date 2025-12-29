@@ -5,7 +5,7 @@ from ..core.config import Config
 
 JWT_ALGORITHM = "HS256"
 
-def create_access_token(subject: str, secret: str | None = None, expires_minutes: int = Config().ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
+def create_access_token(subject: str, secret: str | None = None, expires_minutes: int = 60) -> str:
     if not secret:
         raise RuntimeError("JWT secret is required but not provided")
     expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
