@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 
-from .base import Base  # Assuming a Base declarative class exists in backend/app/db/base.py
+from .base import Base
 
 class Family(Base):
     """
@@ -16,6 +16,7 @@ class Family(Base):
     __tablename__ = "family"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False, default="My Family")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # One-to-many relationship to members

@@ -5,7 +5,7 @@ async def create_family(session, name: str = "My Family") -> Family:
     """
     Create a new Family row.
     """
-    family = Family()
+    family = Family(name=name)
     # If Family model had a name column, you could set it here:
     # family.name = name
     session.add(family)
