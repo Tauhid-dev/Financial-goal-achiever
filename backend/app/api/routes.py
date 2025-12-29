@@ -1,6 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
 from backend.app.modules.models.schemas import FamilySchema, DocumentSchema
+from backend.app.db.session import get_async_session
+from backend.app.db.repositories.document_repo import create_document
+from backend.app.db.repositories.transaction_repo import bulk_create_transactions
+from backend.app.db.repositories.summary_repo import upsert_monthly_summaries
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
 
