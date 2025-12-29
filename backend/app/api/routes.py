@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
-from backend.app.modules.models.schemas import FamilySchema, DocumentSchema
+from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, MonthlySummarySchema
 from backend.app.auth.deps import get_current_user
 from backend.app.db.models import User
 from backend.app.db.session import get_async_session
-from backend.app.db.repositories.document_repo import create_document
+from backend.app.db.repositories.document_repo import create_document, list_documents
 from backend.app.db.repositories.transaction_repo import bulk_create_transactions
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
-from backend.app.db.repositories.document_repo import list_documents
 from ..api.authz import assert_family_access
-from backend.app.modules.models.schemas import MonthlySummarySchema, DocumentSchema
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
 
@@ -96,10 +94,25 @@ async def upload_document(
 # -----------------------------------------------------------------
 # Summary endpoint – uses normalization layer
 # -----------------------------------------------------------------
-@router.get("/summary/{family_id}")
-async def get_summary(family_id: str):
-    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
+@router.get("/summary/{family_id}", response_model=list[MonthlySummarySchema])
+async def get_summary(
+    family_id: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+    rows = await list_monthly_summaries(session, family_id)
+    return rows
 
+@router.get("/documents/{family_id}", response_model=list[DocumentSchema])
+async def get_documents(
+    family_id: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+    rows = await list_documents(session, family_id)
+    return rows
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
