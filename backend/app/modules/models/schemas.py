@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class FamilySchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
 
     class Config:
@@ -11,8 +11,8 @@ class FamilySchema(BaseModel):
 
 
 class FamilyMemberSchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    family_id: uuid.UUID
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
     name: str
     role: str | None = None
 

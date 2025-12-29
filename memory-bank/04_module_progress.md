@@ -22,8 +22,9 @@
 - Upload endpoint persists Document/Transaction/MonthlySummary
 
 ## Partially Completed / Gaps
-- API not connected to processing pipeline
-- CI fixed / pending verification
+- Auth not implemented (users + JWT)
+- Family persistence not wired (family_id placeholder)
+- Summary/goals/insights not DB‑backed (still 501)
 
 ## Current Focus
 - Next Phase: Persistence + Auth
