@@ -13,6 +13,9 @@ from ..core.config import Config
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 settings = Config()
 
+from backend.app.db.repositories.family_repo import create_family
+from backend.app.db.repositories.membership_repo import add_member
+
 @router.post("/register", response_model=UserRead)
 async def register(
     user: UserCreate,
@@ -30,6 +33,10 @@ async def register(
     async with session.begin():
         session.add(new_user)
         await session.flush()
+        # Create default family
+        family = await create_family(session, name="My Family")
+        # Add membership linking user to family as owner
+        await add_member(session, user_id=new_user.id, family_id=family.id, role="owner")
     return UserRead.from_orm(new_user)
 
 @router.post("/login", response_model=Token)

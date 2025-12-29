@@ -51,11 +51,17 @@ async def upload_document(
             os.remove(temp_path)
 
     # Persist results inside a transaction
+    from backend.app.db.repositories.membership_repo import get_default_family_id_for_user
+
     async with session.begin():
+        # Resolve family_id for current user
+        family_id = await get_default_family_id_for_user(session, current_user.id)
+        if not family_id:
+            raise HTTPException(status_code=400, detail="User has no family membership")
         # Create Document row
         doc = await create_document(
             session,
-            family_id="placeholder-family",
+            family_id=family_id,
             filename=file.filename,
             source_type="bank_statement_v1",
         )
