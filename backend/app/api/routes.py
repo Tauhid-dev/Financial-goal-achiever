@@ -21,11 +21,13 @@ async def create_family(family: FamilySchema):
 # Document upload (PDF)
 # -----------------------------------------------------------------
 @router.post("/documents/upload", response_model=DocumentSchema)
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_async_session),
+):
     """
     Accept a PDF upload, store it temporarily, run the processing pipeline,
-    then delete the temporary file. Returns the pipeline result alongside
-    minimal document metadata.
+    then persist results to the database.
     """
     import os
     import tempfile
@@ -45,12 +47,37 @@ async def upload_document(file: UploadFile = File(...)):
         if "temp_path" in locals() and os.path.exists(temp_path):
             os.remove(temp_path)
 
-    # Return document metadata plus pipeline output (as a dict)
+    # Persist results inside a transaction
+    async with session.begin():
+        # Create Document row
+        doc = await create_document(
+            session,
+            family_id="placeholder-family",
+            filename=file.filename,
+            source_type="bank_statement_v1",
+        )
+        # Bulk insert Transactions
+        txn_count = await bulk_create_transactions(
+            session,
+            document_id=doc.id,
+            family_id=doc.family_id,
+            txns=pipeline_result.get("transactions_normalized", []),
+        )
+        # Upsert Monthly Summaries
+        summary_count = await upsert_monthly_summaries(
+            session,
+            family_id=doc.family_id,
+            monthly=pipeline_result.get("monthly_summary", {}),
+        )
+
+    # Return enriched response
     return {
-        "id": "placeholder-id",
-        "family_id": "placeholder-family",
-        "filename": file.filename,
-        "uploaded_at": "1970-01-01T00:00:00Z",
+        "id": doc.id,
+        "family_id": doc.family_id,
+        "filename": doc.filename,
+        "uploaded_at": doc.uploaded_at.isoformat(),
+        "transactions_inserted": txn_count,
+        "months_upserted": summary_count,
         "pipeline_result": pipeline_result,
     }
 

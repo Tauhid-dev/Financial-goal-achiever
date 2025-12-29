@@ -11,7 +11,7 @@
 - PDF ingestion module (parser interface, bank statement parser v1, OCR stub)
 - Transaction normalization & categorization (schema, rules, confidence, normalizer)
 - Budget aggregation & analysis (deterministic, pure functions)
-- Savings goals, projections & what-if simulator (deterministic)
+- Savings goals, projections & what‑if simulator (deterministic)
 - Privacy & redaction layer (patterns, redactor, sanitizer, guardrails)
 - API contracts & route stubs (FastAPI app factory, schemas, endpoints)
 - Containerization scaffolding (Dockerfile, docker-compose, env contract)
@@ -19,6 +19,7 @@
 - Database domain models completed
 - Pipeline orchestrator wiring
 - Unit tests added
+- Upload endpoint persists Document/Transaction/MonthlySummary
 
 ## Partially Completed / Gaps
 - API not connected to processing pipeline
