@@ -1,3 +1,10 @@
 ## Decisions Log
 
+- API Routing Consolidation
+- No LLM in v1
+- No Code Execution During Build
+- Privacy-First Defaults
+- Modular Architecture
+- Memory Bank Correction
+- DB Models Completed
 - Transaction direction inferred from amount sign when missing; default date set to "1970-01-01"; amount cast to float.
