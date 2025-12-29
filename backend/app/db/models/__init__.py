@@ -8,6 +8,7 @@ from ..models.transaction import Transaction
 from ..models.goal import Goal
 from ..models.monthly_summary import MonthlySummary
 from ..models.user import User
+from ..models.membership import Membership
 
 __all__ = [
     "Family",
