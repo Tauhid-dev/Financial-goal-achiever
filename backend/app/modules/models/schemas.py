@@ -21,8 +21,8 @@ class FamilyMemberSchema(BaseModel):
 
 
 class DocumentSchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    family_id: uuid.UUID
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
     filename: str
     uploaded_at: datetime
 
@@ -36,8 +36,8 @@ class DocumentSchema(BaseModel):
 
 
 class TransactionSchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    family_id: uuid.UUID
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
     amount: float
     date: datetime
     description: str | None = None
@@ -47,8 +47,8 @@ class TransactionSchema(BaseModel):
 
 
 class GoalSchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    family_id: uuid.UUID
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
     name: str
     target_amount: float
     target_date: datetime
@@ -58,11 +58,13 @@ class GoalSchema(BaseModel):
 
 
 class MonthlySummarySchema(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    family_id: uuid.UUID
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
     month: str
-    total_income: float
-    total_expense: float
+    income: float
+    expenses: float
+    savings: float
+    savings_rate: float
 
     class Config:
         orm_mode = True
