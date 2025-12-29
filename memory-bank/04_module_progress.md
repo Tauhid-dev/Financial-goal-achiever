@@ -23,9 +23,10 @@
 - DB‑backed transactions endpoint + DB‑backed insights endpoint (authz)
 
 ## Partially Completed / Gaps
-- Auth not implemented (users + JWT)
-- Family persistence not wired (family_id placeholder)
-- Summary/goals/insights not DB‑backed (still 501)
+- Goals not DB‑backed (still 501)
+- Documents list endpoint uses DocumentSchema (upload schema) — consider DocumentListItemSchema later
+- No migrations applied yet (alembic scaffolding only)
+- Frontend not started
 
 ## Current Focus
 - Next Phase: Persistence + Auth
