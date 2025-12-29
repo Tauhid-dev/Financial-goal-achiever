@@ -114,6 +114,20 @@ async def get_documents(
     await assert_family_access(session, current_user.id, family_id)
     rows = await list_documents(session, family_id)
     return rows
+
+@router.get("/transactions/{family_id}", response_model=list[TransactionSchema])
+async def get_transactions(
+    family_id: str,
+    month: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+    rows = await list_transactions(session, family_id, month=month, limit=limit, offset=offset)
+    return rows
+
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
@@ -133,12 +147,13 @@ async def get_insights(
 ):
     await assert_family_access(session, current_user.id, family_id)
 
+    # Load all monthly summaries once
+    summaries = await list_monthly_summaries(session, family_id)
+
     # Determine month to use
     if month:
         month_to_use = month
     else:
-        # Get latest summary month
-        summaries = await list_monthly_summaries(session, family_id)
         month_to_use = summaries[0].month if summaries else None
 
     # Fetch latest summary dict (or None)

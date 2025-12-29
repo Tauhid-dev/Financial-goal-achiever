@@ -20,6 +20,7 @@
 - Pipeline orchestrator wiring
 - Unit tests added
 - Upload endpoint persists Document/Transaction/MonthlySummary
+- DB‑backed transactions endpoint + DB‑backed insights endpoint (authz)
 
 ## Partially Completed / Gaps
 - Auth not implemented (users + JWT)
