@@ -26,6 +26,11 @@ class DocumentSchema(BaseModel):
     filename: str
     uploaded_at: datetime
 
+    # Additional fields for persistence feedback
+    transactions_inserted: int | None = None
+    months_upserted: int | None = None
+    pipeline_result: dict | None = None
+
     class Config:
         orm_mode = True
 

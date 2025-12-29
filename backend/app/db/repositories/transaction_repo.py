@@ -10,6 +10,9 @@ async def bulk_create_transactions(
 ) -> int:
     """
     Bulk insert Transaction rows linked to a Document.
+    - Guarantees a non‑null date (defaults to "1970-01-01").
+    - Guarantees amount is a float.
+    - Guarantees direction is "income" or "expense"; if missing, infer from amount sign.
     Returns the number of rows inserted.
     """
     if not txns:
@@ -17,14 +20,22 @@ async def bulk_create_transactions(
 
     objs = []
     for tx in txns:
+        # Ensure required fields have safe defaults
+        tx_date = tx.get("date") or "1970-01-01"
+        tx_amount = float(tx.get("amount", 0.0))
+        tx_direction = tx.get("direction")
+        if tx_direction not in ("income", "expense"):
+            # Infer direction from amount sign
+            tx_direction = "income" if tx_amount >= 0 else "expense"
+
         obj = Transaction(
             id=str(uuid.uuid4()),
             document_id=document_id,
             family_id=family_id,
-            date=tx.get("date"),
+            date=tx_date,
             description=tx.get("description", ""),
-            amount=tx.get("amount", 0.0),
-            direction=tx.get("direction", ""),
+            amount=tx_amount,
+            direction=tx_direction,
             category=tx.get("category", ""),
             subcategory=tx.get("subcategory"),
             confidence=tx.get("confidence", 0.0),
