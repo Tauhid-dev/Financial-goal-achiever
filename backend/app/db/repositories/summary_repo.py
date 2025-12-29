@@ -50,3 +50,14 @@ async def upsert_monthly_summaries(
 
     await session.flush()
     return count
+
+async def list_monthly_summaries(session: AsyncSession, family_id: str):
+    """
+    Return a list of MonthlySummary rows for the given family,
+    ordered by month descending.
+    """
+    stmt = select(MonthlySummary).where(
+        MonthlySummary.family_id == family_id
+    ).order_by(MonthlySummary.month.desc())
+    result = await session.execute(stmt)
+    return result.scalars().all()
