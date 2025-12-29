@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
 from backend.app.modules.models.schemas import FamilySchema, DocumentSchema
+from backend.app.auth.deps import get_current_user
+from backend.app.db.models import User
 from backend.app.db.session import get_async_session
 from backend.app.db.repositories.document_repo import create_document
 from backend.app.db.repositories.transaction_repo import bulk_create_transactions
@@ -24,6 +26,7 @@ async def create_family(family: FamilySchema):
 async def upload_document(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Accept a PDF upload, store it temporarily, run the processing pipeline,
