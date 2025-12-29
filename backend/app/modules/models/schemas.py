@@ -39,7 +39,7 @@ class TransactionSchema(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     family_id: str
     amount: float
-    date: datetime
+    date: str
     description: str | None = None
 
     class Config:
