@@ -20,4 +20,4 @@ class Document(Base):
     source_type = Column(String, nullable=False, default="bank_statement_v1")
     family = relationship("Family", back_populates="documents")
     transactions = relationship("Transaction", back_populates="document", cascade="all, delete-orphan")
-    owner = relationship("Member", back_populates="documents")
+    # owner relationship removed for privacy‑first design

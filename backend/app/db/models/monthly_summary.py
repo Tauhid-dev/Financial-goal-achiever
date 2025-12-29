@@ -1,12 +1,12 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric, func
+from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric, func, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from ..base import Base
 
 class MonthlySummary(Base):
     __tablename__ = "monthly_summaries"
-
+    __table_args__ = (UniqueConstraint('family_id', 'month', name='uq_family_month'), )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
     month = Column(String, nullable=False)  # format YYYY‑MM
