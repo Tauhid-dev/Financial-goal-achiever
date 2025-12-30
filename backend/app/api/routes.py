@@ -6,9 +6,14 @@ from backend.app.auth.deps import get_current_user
 from backend.app.db.models import User
 from backend.app.db.session import get_async_session
 from backend.app.db.repositories.document_repo import create_document, list_documents
+from backend.app.db.repositories.membership_repo import get_default_family_id_for_user
 from backend.app.db.repositories.transaction_repo import bulk_create_transactions, list_transactions, top_expense_categories
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
 from ..api.authz import assert_family_access
+from backend.app.db.repositories.goal_repo import create_goal as repo_create_goal, list_goals as repo_list_goals, delete_goal as repo_delete_goal
+from backend.app.modules.models.schemas import GoalCreateSchema, GoalWithProjectionSchema
+from backend.app.modules.goals.schema import SavingsGoal
+from backend.app.modules.goals.projection import project_time_to_goal
 from backend.app.modules.insights.deterministic import build_insights
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
@@ -131,9 +136,97 @@ async def get_transactions(
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
-@router.post("/goals")
-async def create_goal(goal: dict):
-    raise HTTPException(status_code=501, detail="Not wired yet. Use /documents/upload pipeline.")
+@router.post("/goals", response_model=GoalWithProjectionSchema)
+async def create_goal(
+    goal: GoalCreateSchema,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    # Resolve family_id for current user
+    family_id = await get_default_family_id_for_user(session, current_user.id)
+    if not family_id:
+        raise HTTPException(status_code=400, detail="User has no family membership")
+    async with session.begin():
+        # Create DB goal row
+        db_goal = await repo_create_goal(
+            session,
+            family_id=family_id,
+            name=goal.name,
+            target_amount=goal.target_amount,
+            current_amount=goal.current_amount,
+            monthly_contribution=goal.monthly_contribution,
+            target_date=goal.target_date,
+        )
+    # Build deterministic projection
+    savings_goal = SavingsGoal(
+        id=db_goal.id,
+        family_id=db_goal.family_id,
+        name=db_goal.name,
+        target_amount=db_goal.target_amount,
+        current_amount=db_goal.current_amount,
+        monthly_contribution=db_goal.monthly_contribution,
+        target_date=db_goal.target_date,
+    )
+    projection = project_time_to_goal(savings_goal)
+    # Return combined schema
+    return GoalWithProjectionSchema(
+        id=db_goal.id,
+        family_id=db_goal.family_id,
+        name=db_goal.name,
+        target_amount=db_goal.target_amount,
+        current_amount=db_goal.current_amount,
+        monthly_contribution=db_goal.monthly_contribution,
+        target_date=db_goal.target_date,
+        projection=projection,
+    )
+
+@router.get("/goals/{family_id}", response_model=list[GoalWithProjectionSchema])
+async def list_goals(
+    family_id: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+    db_goals = await repo_list_goals(session, family_id)
+    result = []
+    for g in db_goals:
+        savings_goal = SavingsGoal(
+            id=g.id,
+            family_id=g.family_id,
+            name=g.name,
+            target_amount=g.target_amount,
+            current_amount=g.current_amount,
+            monthly_contribution=g.monthly_contribution,
+            target_date=g.target_date,
+        )
+        projection = project_time_to_goal(savings_goal)
+        result.append(
+            GoalWithProjectionSchema(
+                id=g.id,
+                family_id=g.family_id,
+                name=g.name,
+                target_amount=g.target_amount,
+                current_amount=g.current_amount,
+                monthly_contribution=g.monthly_contribution,
+                target_date=g.target_date,
+                projection=projection,
+            )
+        )
+    return result
+
+@router.delete("/goals/{family_id}/{goal_id}", response_model=dict)
+async def delete_goal(
+    family_id: str,
+    goal_id: str,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    await assert_family_access(session, current_user.id, family_id)
+    async with session.begin():
+        ok = await repo_delete_goal(session, family_id, goal_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    return {"deleted": True}
 
 # -----------------------------------------------------------------
 # Insights – uses the InsightService
