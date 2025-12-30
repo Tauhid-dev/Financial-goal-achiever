@@ -47,11 +47,13 @@ class TransactionSchema(BaseModel):
 
 
 class GoalSchema(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str
     family_id: str
     name: str
     target_amount: float
-    target_date: datetime
+    current_amount: float = 0.0
+    monthly_contribution: float = 0.0
+    target_date: str | None = None
 
     class Config:
         orm_mode = True
@@ -69,7 +71,7 @@ class GoalProjectionSchema(BaseModel):
     is_achievable: bool
 
 class GoalWithProjectionSchema(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str
     family_id: str
     name: str
     target_amount: float
