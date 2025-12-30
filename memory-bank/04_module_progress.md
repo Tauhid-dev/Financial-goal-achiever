@@ -29,4 +29,4 @@
 - Frontend not started
 
 ## Current Focus
-- Next Phase:Goals Persistence + Polish
+- Next Phase: Goals persistence + polish
