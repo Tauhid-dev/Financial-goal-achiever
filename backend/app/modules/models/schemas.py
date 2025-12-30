@@ -56,6 +56,31 @@ class GoalSchema(BaseModel):
     class Config:
         orm_mode = True
 
+class GoalCreateSchema(BaseModel):
+    name: str
+    target_amount: float
+    current_amount: float = 0.0
+    monthly_contribution: float = 0.0
+    target_date: str | None = None
+
+class GoalProjectionSchema(BaseModel):
+    months_required: int
+    years_required: float
+    is_achievable: bool
+
+class GoalWithProjectionSchema(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    family_id: str
+    name: str
+    target_amount: float
+    current_amount: float
+    monthly_contribution: float
+    target_date: str | None = None
+    projection: GoalProjectionSchema | None = None
+
+    class Config:
+        orm_mode = True
+
 
 class MonthlySummarySchema(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
