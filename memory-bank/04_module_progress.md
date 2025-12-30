@@ -21,9 +21,9 @@
 - Unit tests added
 - Upload endpoint persists Document/Transaction/MonthlySummary
 - DB‑backed transactions endpoint + DB‑backed insights endpoint (authz)
+- Goals DB‑backed (completed)
 
 ## Partially Completed / Gaps
-- Goals not DB‑backed (still 501)
 - Documents list endpoint uses DocumentSchema (upload schema) — consider DocumentListItemSchema later
 - No migrations applied yet (alembic scaffolding only)
 - Frontend not started

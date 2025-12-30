@@ -11,3 +11,4 @@
 - Upload endpoint resolves user’s default family_id via membership before persisting documents/txns/summaries.
 - Transaction ingestion hardening: infer direction from amount if missing; default date to 1970-01-01; cast amount to float.
 - Insights are deterministic from MonthlySummary + top expense categories (no AI provider).
+- Deterministic goal projection added at API layer: Goals endpoints now return projections computed via `project_time_to_goal` and included in `GoalWithProjectionSchema`.
