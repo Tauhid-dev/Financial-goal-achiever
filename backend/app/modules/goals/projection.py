@@ -1,5 +1,6 @@
 from math import ceil
-from .schema import SavingsGoal
+from backend.app.modules.goals.schema import SavingsGoal
+from backend.app.modules.models.schemas import GoalProjectionSchema
 
 def project_time_to_goal(goal: SavingsGoal) -> dict:
     """

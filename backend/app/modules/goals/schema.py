@@ -13,3 +13,4 @@ class SavingsGoal:
     current_amount: float
     monthly_contribution: float
     target_date: Optional[str] = None   # ISO‑like date string or None
+    family_id: Optional[str] = None
