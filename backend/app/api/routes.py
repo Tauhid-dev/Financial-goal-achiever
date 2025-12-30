@@ -12,8 +12,7 @@ from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, l
 from ..api.authz import assert_family_access
 from backend.app.db.repositories.goal_repo import create_goal as repo_create_goal, list_goals as repo_list_goals, delete_goal as repo_delete_goal
 from backend.app.modules.models.schemas import GoalCreateSchema, GoalWithProjectionSchema
-from backend.app.modules.goals.schema import SavingsGoal
-from backend.app.modules.goals.projection import project_time_to_goal
+from backend.app.modules.goals.api_mapping import goal_row_to_with_projection
 from backend.app.modules.insights.deterministic import build_insights
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
@@ -157,28 +156,8 @@ async def create_goal(
             monthly_contribution=goal.monthly_contribution,
             target_date=goal.target_date,
         )
-    # Build deterministic projection
-    savings_goal = SavingsGoal(
-        id=db_goal.id,
-        family_id=db_goal.family_id,
-        name=db_goal.name,
-        target_amount=db_goal.target_amount,
-        current_amount=db_goal.current_amount,
-        monthly_contribution=db_goal.monthly_contribution,
-        target_date=db_goal.target_date,
-    )
-    projection = project_time_to_goal(savings_goal)
-    # Return combined schema
-    return GoalWithProjectionSchema(
-        id=db_goal.id,
-        family_id=db_goal.family_id,
-        name=db_goal.name,
-        target_amount=db_goal.target_amount,
-        current_amount=db_goal.current_amount,
-        monthly_contribution=db_goal.monthly_contribution,
-        target_date=db_goal.target_date,
-        projection=projection,
-    )
+    # Return combined schema using pure mapper
+    return GoalWithProjectionSchema(**goal_row_to_with_projection(db_goal))
 
 @router.get("/goals/{family_id}", response_model=list[GoalWithProjectionSchema])
 async def list_goals(
@@ -190,28 +169,7 @@ async def list_goals(
     db_goals = await repo_list_goals(session, family_id)
     result = []
     for g in db_goals:
-        savings_goal = SavingsGoal(
-            id=g.id,
-            family_id=g.family_id,
-            name=g.name,
-            target_amount=g.target_amount,
-            current_amount=g.current_amount,
-            monthly_contribution=g.monthly_contribution,
-            target_date=g.target_date,
-        )
-        projection = project_time_to_goal(savings_goal)
-        result.append(
-            GoalWithProjectionSchema(
-                id=g.id,
-                family_id=g.family_id,
-                name=g.name,
-                target_amount=g.target_amount,
-                current_amount=g.current_amount,
-                monthly_contribution=g.monthly_contribution,
-                target_date=g.target_date,
-                projection=projection,
-            )
-        )
+        result.append(GoalWithProjectionSchema(**goal_row_to_with_projection(g)))
     return result
 
 @router.delete("/goals/{family_id}/{goal_id}", response_model=dict)
