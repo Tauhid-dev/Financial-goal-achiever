@@ -1,32 +1,15 @@
-# Python cache / bytecode
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Virtualenvs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+dist/
+build/
+*.egg-info/
 .venv/
 venv/
-env/
-
-# Environment files
-.env
-.env.*
-*.env
-
-# Logs
-*.log
-
-# OS / editor
 .DS_Store
-.idea/
-.vscode/
-
-# Pytest / coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Build / dist
-build/
-dist/
-*.egg-info/
+.env
+*.sqlite3
