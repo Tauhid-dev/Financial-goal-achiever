@@ -57,7 +57,6 @@ class GoalSchema(BaseModel):
 
     class Config:
         orm_mode = True
-
 class GoalCreateSchema(BaseModel):
     name: str
     target_amount: float
