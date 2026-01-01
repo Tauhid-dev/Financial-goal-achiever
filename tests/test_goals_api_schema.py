@@ -28,18 +28,36 @@ def override_dependencies(monkeypatch):
 
     monkeypatch.setattr("backend.app.api.routes.assert_family_access", fake_assert_family_access)
 
+    # Override async session dependency to avoid real DB connection
+    async def dummy_async_session():
+        class DummySession:
+            def begin(self):
+                return self
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                pass
+
+        return DummySession()
+
+    from backend.app.db.session import get_async_session as real_get_async_session
+    app.dependency_overrides[real_get_async_session] = dummy_async_session
+
     # Mock repository functions used by the goals endpoints
     async def fake_create_goal(session, family_id, name, target_amount, current_amount=0.0,
                                monthly_contribution=0.0, target_date=None):
-        class Obj:
-            id = "goal-id"
-            family_id = family_id
-            name = name
-            target_amount = target_amount
-            current_amount = current_amount
-            monthly_contribution = monthly_contribution
-            target_date = target_date
-        return Obj()
+        from types import SimpleNamespace
+        return SimpleNamespace(
+            id="goal-id",
+            family_id=family_id,
+            name=name,
+            target_amount=target_amount,
+            current_amount=current_amount,
+            monthly_contribution=monthly_contribution,
+            target_date=target_date,
+        )
 
     async def fake_list_goals(session, family_id):
         return [await fake_create_goal(session, family_id, "Goal 1", 100.0)]
