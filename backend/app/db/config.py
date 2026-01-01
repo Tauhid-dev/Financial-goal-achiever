@@ -1,4 +1,5 @@
 import os
+from pydantic_settings import BaseSettings  # Use dummy BaseSettings from project root
 
 class DBConfig:
     """
