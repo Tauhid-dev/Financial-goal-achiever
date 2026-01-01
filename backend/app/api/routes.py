@@ -11,8 +11,8 @@ from backend.app.db.repositories.transaction_repo import bulk_create_transaction
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
 from ..api.authz import assert_family_access
 from backend.app.db.repositories.goal_repo import create_goal as repo_create_goal, list_goals as repo_list_goals, delete_goal as repo_delete_goal
-from backend.app.modules.models.schemas import GoalCreateSchema, GoalWithProjectionSchema
-from backend.app.modules.goals.api_mapping import goal_row_to_with_projection
+from backend.app.modules.models.schemas import GoalCreateSchema, GoalSchema
+from backend.app.modules.goals.api_mapping import goal_row_to_schema
 from backend.app.modules.insights.deterministic import build_insights
 
 router = APIRouter(prefix="/api", tags=["Family Finance"])
@@ -135,7 +135,7 @@ async def get_transactions(
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
-@router.post("/goals", response_model=GoalWithProjectionSchema)
+@router.post("/goals", response_model=GoalSchema)
 async def create_goal(
     goal: GoalCreateSchema,
     session: AsyncSession = Depends(get_async_session),
@@ -156,8 +156,8 @@ async def create_goal(
             monthly_contribution=goal.monthly_contribution,
             target_date=goal.target_date,
         )
-    # Return combined schema using pure mapper
-    return GoalWithProjectionSchema(**goal_row_to_with_projection(db_goal))
+    # Return GoalSchema using mapper
+    return GoalSchema(**goal_row_to_schema(db_goal))
 
 @router.get("/goals/{family_id}", response_model=list[GoalWithProjectionSchema])
 async def list_goals(
