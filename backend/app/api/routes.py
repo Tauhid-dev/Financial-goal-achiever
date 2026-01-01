@@ -79,28 +79,29 @@ async def get_transactions(
 # -----------------------------------------------------------------
 # Goals
 # -----------------------------------------------------------------
-@router.post("/goals", response_model=GoalWithProjectionSchema)
+@router.post("/goals/{family_id}", response_model=GoalWithProjectionSchema)
 async def create_goal(
+    family_id: str,
     goal: GoalCreateSchema,
+    session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Placeholder implementation for testing schema validation.
-    Returns the provided goal data wrapped in GoalWithProjectionSchema.
+    Create a new goal for a family, enforce authz, and return the goal with projection.
     """
-    # Directly map fields; missing fields will trigger FastAPI validation before this point.
-    return GoalWithProjectionSchema(
-        id="placeholder-id",
-        family_id="placeholder-family",
+    await assert_family_access(session, current_user.id, family_id)
+    # Create the goal in the DB
+    created = await repo_create_goal(
+        session,
+        family_id,
         name=goal.name,
         target_amount=goal.target_amount,
         current_amount=goal.current_amount,
         monthly_contribution=goal.monthly_contribution,
         target_date=goal.target_date,
-        created_at=None,
-        updated_at=None,
-        projection=None,
     )
+    # Convert ORM object to response schema with projection
+    return GoalWithProjectionSchema(**goal_row_to_with_projection(created))
 
 @router.get("/goals/{family_id}", response_model=list[GoalWithProjectionSchema])
 async def list_goals(
