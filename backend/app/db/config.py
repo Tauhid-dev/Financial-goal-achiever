@@ -1,5 +1,6 @@
 import os
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 class DBConfig(BaseSettings):
     # DATABASE_URL is required; placeholder values are in .env.example
@@ -8,3 +9,4 @@ class DBConfig(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"

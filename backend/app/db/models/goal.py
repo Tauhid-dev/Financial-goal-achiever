@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
-from .base import Base
+from ..base import Base
 
 class Goal(Base):
     """

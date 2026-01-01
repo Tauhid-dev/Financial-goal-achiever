@@ -1,14 +1,20 @@
 import pytest
+from dataclasses import dataclass
 from fastapi.testclient import TestClient
 from backend.app.main import app
+from backend.app.auth.deps import get_current_user
+
+@dataclass
+class DummyUser:
+    id: str
+    email: str
 
 client = TestClient(app)
 
-def get_auth_headers():
-    # Placeholder for auth headers; adjust as needed for your auth setup.
-    return {}
-
 def test_create_goal_schema_enforcement():
+    # Override auth dependency to bypass 401 and reach schema validation
+    app.dependency_overrides[get_current_user] = lambda: DummyUser(id="u1", email="test@example.com")
+
     # Payload missing required field 'target_amount' should trigger 422 validation error.
     payload = {
         "name": "New Goal",
@@ -17,8 +23,10 @@ def test_create_goal_schema_enforcement():
         "monthly_contribution": 100.0,
         "target_date": None,
     }
-    response = client.post("/api/goals", json=payload, headers=get_auth_headers())
-    # If authentication is required, the endpoint may return 401; we focus on schema validation.
-    assert response.status_code in (401, 422)
-    if response.status_code == 422:
-        assert "target_amount" in response.text
+    response = client.post("/api/goals", json=payload)
+    # Assert strict 422 for schema validation
+    assert response.status_code == 422
+    assert "target_amount" in response.text
+
+    # Clean up override
+    app.dependency_overrides = {}

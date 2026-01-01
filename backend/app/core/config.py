@@ -1,5 +1,6 @@
 import os
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 class Config(BaseSettings):
     # Core configuration – values are read from the environment or .env file
