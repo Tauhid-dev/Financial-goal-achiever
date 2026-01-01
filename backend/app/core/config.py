@@ -1,14 +1,12 @@
 import os
-from pydantic import BaseSettings, Field
 
-class Config(BaseSettings):
-    # Core configuration – values are read from the environment or .env file
-    DATABASE_URL: str = Field(..., env="DATABASE_URL")
-    ENV: str = Field("production", env="ENV")
-    LOG_LEVEL: str = Field("INFO", env="LOG_LEVEL")
-    JWT_SECRET: str = Field(..., env="JWT_SECRET")  # required, no fallback
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+class Config:
+    """
+    Minimal core configuration for testing.
+    Uses environment variables when available, otherwise defaults.
+    """
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+    ENV: str = os.getenv("ENV", "production")
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "test-secret")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))

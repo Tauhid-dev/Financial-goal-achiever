@@ -45,3 +45,45 @@ async def bulk_create_transactions(
     session.add_all(objs)
     await session.flush()
     return len(objs)
+
+
+async def list_transactions(
+    session: AsyncSession,
+    family_id: str,
+    month: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[Transaction]:
+    """
+    List transactions for a family, optionally filtered by month.
+    """
+    from sqlalchemy import select
+    query = select(Transaction).where(Transaction.family_id == family_id)
+    if month:
+        query = query.where(Transaction.date.like(f"{month}%"))
+    query = query.order_by(Transaction.date.desc()).limit(limit).offset(offset)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def top_expense_categories(
+    session: AsyncSession,
+    family_id: str,
+    month: str | None = None,
+) -> list[dict]:
+    """
+    Get top 10 expense categories by total amount for a family.
+    """
+    from sqlalchemy import select, func
+    query = select(
+        Transaction.category,
+        func.sum(Transaction.amount).label("total")
+    ).where(
+        Transaction.family_id == family_id,
+        Transaction.direction == "expense"
+    )
+    if month:
+        query = query.where(Transaction.date.like(f"{month}%"))
+    query = query.group_by(Transaction.category).order_by(func.sum(Transaction.amount).desc()).limit(10)
+    result = await session.execute(query)
+    return [{"category": row.category, "total": row.total} for row in result.all()]

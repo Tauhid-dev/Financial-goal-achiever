@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 
-from .base import Base
+from ..base import Base
 
 class Family(Base):
     """

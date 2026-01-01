@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..db.session import get_async_session
@@ -39,16 +40,24 @@ async def register(
         await add_member(session, user_id=new_user.id, family_id=family.id, role="owner")
     return UserRead.from_orm(new_user)
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 @router.post("/login", response_model=Token)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    login: LoginRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    result = await session.execute(select(User).where(User.email == form_data.username))
+    result = await session.execute(select(User).where(User.email == login.username))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user or not verify_password(login.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
-    access_token = create_access_token(subject=user.email, secret=settings.JWT_SECRET, expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        subject=user.email,
+        secret=settings.JWT_SECRET,
+        expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserRead)
