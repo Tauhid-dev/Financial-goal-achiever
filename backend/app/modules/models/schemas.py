@@ -32,6 +32,21 @@ class DocumentSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DocumentListItemSchema(BaseModel):
+    """
+    Lightweight representation of a Document for list endpoints.
+    Excludes heavy upload‑related fields.
+    """
+    id: str
+    family_id: str
+    filename: str
+    uploaded_at: datetime
+    status: str | None = None          # e.g. "processed"
+    source_type: str | None = None     # e.g. "pdf"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class TransactionSchema(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     family_id: str
@@ -85,5 +100,14 @@ class MonthlySummarySchema(BaseModel):
     expenses: float
     savings: float
     savings_rate: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GoalDeleteResponseSchema(BaseModel):
+    """
+    Simple response for a successful delete operation.
+    """
+    deleted: bool
 
     model_config = ConfigDict(from_attributes=True)
