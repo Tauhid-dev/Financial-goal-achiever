@@ -29,7 +29,7 @@ def override_dependencies(monkeypatch):
     monkeypatch.setattr("backend.app.api.routes.assert_family_access", fake_assert_family_access)
 
     # Override async session dependency to avoid real DB connection
-    async def dummy_async_session():
+    def dummy_async_session():
         class DummySession:
             def begin(self):
                 return self
