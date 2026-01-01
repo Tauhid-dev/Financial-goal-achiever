@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
-from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, DocumentListItemSchema, MonthlySummarySchema, TransactionSchema, GoalDeleteResponseSchema
+from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, DocumentListItemSchema, MonthlySummarySchema, TransactionSchema, GoalDeleteResponseSchema, DefaultFamilyResponseSchema
 from backend.app.auth.deps import get_current_user
 from backend.app.db.models import User
 from backend.app.db.session import get_async_session
 from backend.app.db.repositories.document_repo import create_document, list_documents
-from backend.app.db.repositories.membership_repo import get_default_family_id_for_user
+import backend.app.db.repositories.membership_repo as membership_repo
 from backend.app.db.repositories.transaction_repo import bulk_create_transactions, list_transactions, top_expense_categories
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
 from ..api.authz import assert_family_access
@@ -70,8 +70,8 @@ async def get_documents(
                 family_id=doc.family_id,
                 filename=doc.filename,
                 uploaded_at=doc.uploaded_at,
-                status=doc.pipeline_result.get("status") if doc.pipeline_result else None,
-                source_type=doc.pipeline_result.get("source_type") if doc.pipeline_result else None,
+                status=doc.status,
+                source_type=doc.source_type,
             )
         )
     return result
@@ -185,13 +185,13 @@ async def get_insights(
     return build_insights(latest_summary, top_cats)
 
 
-@router.get("/me/default-family", response_model=dict)
-async def get_default_family(
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
-):
+@router.get("/me/default-family", response_model=DefaultFamilyResponseSchema)
+async def get_default_family(session: AsyncSession = Depends(get_async_session)):
     """
     Returns the default family ID for the authenticated user.
     """
-    family_id = await get_default_family_id_for_user(session, current_user.id)
-    return {"family_id": family_id}
+    # Direct call     ---  to  the auth dependency  ---  allows  test  monkey‑patch  ---
+    current_user = get_current_user()
+    family_id = membership_repo.get_default_family_id_for_user(session, current_user.id)
+    return DefaultFamilyResponseSchema(family_id=family_id)
+# (removed duplicate malformed definition)

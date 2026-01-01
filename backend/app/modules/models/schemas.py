@@ -111,3 +111,12 @@ class GoalDeleteResponseSchema(BaseModel):
     deleted: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DefaultFamilyResponseSchema(BaseModel):
+    """
+    Typed response for the /me/default-family endpoint.
+    """
+    family_id: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
