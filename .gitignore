@@ -21,3 +21,4 @@ dist/
 .vscode/
 *.sqlite3
 *.db
+!/.env.example

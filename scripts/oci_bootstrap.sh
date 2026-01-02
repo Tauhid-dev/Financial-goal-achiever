@@ -53,8 +53,14 @@ fi
 # 6. Ensure .env exists
 if [ ! -f ".env" ]; then
   if [ -f ".env.example" ]; then
-    echo "Creating .env from .env.example. Please edit the values as needed."
+    echo "Creating .env from .env.example."
     cp .env.example .env
+    echo "Please edit the following required environment variables as needed:"
+    echo "DATABASE_URL=postgresql+asyncpg://..."
+    echo "JWT_SECRET=change-me"
+    echo "ENV=production"
+    echo "LOG_LEVEL=INFO"
+    echo "ACCESS_TOKEN_EXPIRE_MINUTES=60"
   else
     echo "No .env or .env.example found. Creating empty .env. Please edit manually."
     touch .env
