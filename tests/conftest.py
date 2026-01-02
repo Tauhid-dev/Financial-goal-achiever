@@ -22,6 +22,11 @@ from backend.app.db.session import get_async_session
 # -----------------------------------------------------------------
 # Async engine fixture (session‑wide)
 # -----------------------------------------------------------------
+import pytest_asyncio
+
+# -----------------------------------------------------------------
+# Async engine fixture (session‑wide)
+# -----------------------------------------------------------------
 @pytest.fixture(scope="session")
 def async_engine():
     return create_async_engine(os.getenv("DATABASE_URL"), future=True, echo=False)
@@ -29,7 +34,7 @@ def async_engine():
 # -----------------------------------------------------------------
 # Create / drop tables once per test session
 # -----------------------------------------------------------------
-@pytest.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def prepare_database(async_engine):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -38,7 +43,7 @@ async def prepare_database(async_engine):
 # -----------------------------------------------------------------
 # Provide a real AsyncSession for each test
 # -----------------------------------------------------------------
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session(async_engine):
     async_session = async_sessionmaker(
         async_engine, class_=AsyncSession, expire_on_commit=False

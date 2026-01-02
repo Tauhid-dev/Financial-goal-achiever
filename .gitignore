@@ -22,3 +22,4 @@ dist/
 .idea/
 .vscode/
 *.sqlite3
+test.db
