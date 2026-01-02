@@ -14,3 +14,18 @@ The OCI bootstrap script (`scripts/oci_bootstrap.sh`) expects the `.env.exampl
 ## Development
 
 ...
+
+## Frontend Development
+
+To run the frontend locally:
+
+1. Copy the example environment file:
+   ```bash
+   cp frontend/.env.example frontend/.env
+   ```
+2. Install dependencies and start the dev server:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```

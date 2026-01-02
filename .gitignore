@@ -22,3 +22,4 @@ dist/
 *.sqlite3
 *.db
 !/.env.example
+!frontend/.env.example
