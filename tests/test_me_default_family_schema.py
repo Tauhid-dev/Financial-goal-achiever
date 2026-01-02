@@ -14,9 +14,11 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def override_deps(monkeypatch):
     # Override auth dependency
+    async def _fake_get_current_user():
+        return DummyUser()
     monkeypatch.setattr(
         "backend.app.auth.deps.get_current_user",
-        lambda: DummyUser()
+        _fake_get_current_user
     )
     # Override the route's get_current_user reference
     monkeypatch.setattr(
@@ -24,9 +26,11 @@ def override_deps(monkeypatch):
         lambda: DummyUser()
     )
     # Override family lookup
+    async def _fake_get_default_family_id_for_user(session, user_id):
+        return "f1"
     monkeypatch.setattr(
         "backend.app.db.repositories.membership_repo.get_default_family_id_for_user",
-        lambda session, user_id: "f1"
+        _fake_get_default_family_id_for_user
     )
     # Override async DB session
     monkeypatch.setattr(
@@ -34,9 +38,11 @@ def override_deps(monkeypatch):
         lambda: None
     )
     # Ensure the auth dependency is used (override get_current_user)
+    async def _fake_get_current_user():
+        return DummyUser()
     monkeypatch.setattr(
         "backend.app.auth.deps.get_current_user",
-        lambda: DummyUser()
+        _fake_get_current_user
     )
     yield
     # Cleanup is automatic

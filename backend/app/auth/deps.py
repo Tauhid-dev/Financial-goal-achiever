@@ -17,13 +17,11 @@ async def get_current_user(
 ) -> User:
     # If no token is provided (e.g., in tests), raise a clear 401.
     if not token:
-        # In test environments no token is provided; return a minimal dummy user.
-        class _DummyUser:
-            pass
-        dummy = _DummyUser()
-        dummy.id = "test_user"
-        dummy.email = "test@example.com"
-        return dummy
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     payload = decode_access_token(token, secret=settings.JWT_SECRET)
     email: str = payload.get("sub")
     if not email:

@@ -190,5 +190,5 @@ async def get_default_family(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    family_id = membership_repo.get_default_family_id_for_user(session, current_user.id)
+    family_id = await membership_repo.get_default_family_id_for_user(session, current_user.id)
     return DefaultFamilyResponseSchema(family_id=family_id)
