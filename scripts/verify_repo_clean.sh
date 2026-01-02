@@ -17,7 +17,7 @@ fi
 
 # 2. Ensure no ignored files are tracked
 echo "Checking for tracked ignored files..."
-if git ls-files | grep -E "__pycache__|\.pyc$|\.pyo$|\.pyd$|\.env$|\.venv/|venv/|env/; then
+if git ls-files | grep -E '__pycache__|\.pyc$|\.pyo$|\.pyd$|\.env$|\.venv/|venv/|env/'; then
   echo "Found tracked files that should be ignored."
   exit 1
 else
