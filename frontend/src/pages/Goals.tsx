@@ -1,0 +1,110 @@
+import React, { useEffect, useState } from 'react';
+import { apiFetch, getToken, clearToken } from '../lib/api';
+import { GoalCreate, GoalWithProjection } from '../lib/types';
+import { useNavigate } from 'react-router-dom';
+
+export const Goals: React.FC = () => {
+  const [familyId, setFamilyId] = useState<string>('');
+  const [goals, setGoals] = useState<GoalWithProjection[]>([]);
+  const [title, setTitle] = useState('');
+  const [target, setTarget] = useState<number>(0);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  // fetch default family id
+  useEffect(() => {
+    const fetchFamily = async () => {
+      try {
+        const data = await apiFetch('/api/families/default', { auth: true });
+        if (data && data.id) {
+          setFamilyId(String(data.id));
+        } else {
+          const manual = prompt('Enter your family ID:');
+          if (manual) setFamilyId(manual);
+        }
+      } catch {
+        const manual = prompt('Enter your family ID:');
+        if (manual) setFamilyId(manual);
+      }
+    };
+    fetchFamily();
+  }, []);
+
+  // fetch goals when familyId is set
+  useEffect(() => {
+    if (!familyId) return;
+    const fetchGoals = async () => {
+      try {
+        const data = await apiFetch(`/api/goals/${familyId}`, { auth: true });
+        setGoals(data || []);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+    fetchGoals();
+  }, [familyId]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!familyId) return;
+    const payload: GoalCreate = { title, target_amount: target };
+    try {
+      await apiFetch(`/api/goals/${familyId}`, {
+        method: 'POST',
+        body: payload,
+        auth: true,
+      });
+      const refreshed = await apiFetch(`/api/goals/${familyId}`, { auth: true });
+      setGoals(refreshed);
+      setTitle('');
+      setTarget(0);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (goalId: number) => {
+    if (!familyId) return;
+    try {
+      await apiFetch(`/api/goals/${familyId}/${goalId}`, {
+        method: 'DELETE',
+        auth: true,
+      });
+      setGoals(goals.filter(g => g.id !== goalId));
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    clearToken();
+    navigate('/login');
+  };
+
+  return (
+    <div>
+      <h2>Goals</h2>
+      <button onClick={handleLogout}>Logout</button>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <form onSubmit={handleCreate}>
+        <div>
+          <label>Title:</label>
+          <input value={title} onChange={e => setTitle(e.target.value)} required />
+        </div>
+        <div>
+          <label>Target Amount:</label>
+          <input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} required />
+        </div>
+        <button type="submit">Create Goal</button>
+      </form>
+      <ul>
+        {goals.map(g => (
+          <li key={g.id}>
+            {g.title} - {g.target_amount}{' '}
+            <button onClick={() => handleDelete(g.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
