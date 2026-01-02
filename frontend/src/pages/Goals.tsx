@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { apiFetch, getToken, clearToken } from '../lib/api';
+import { apiFetch, clearToken } from '../lib/api';
 import { GoalCreate, GoalWithProjection } from '../lib/types';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,7 @@ export const Goals: React.FC = () => {
   useEffect(() => {
     const fetchFamily = async () => {
       try {
-        const data = await apiFetch('/api/families/default', { auth: true });
+        const data = await apiFetch('/api/families/default');
         if (data && data.id) {
           setFamilyId(String(data.id));
         } else {
@@ -35,7 +35,7 @@ export const Goals: React.FC = () => {
     if (!familyId) return;
     const fetchGoals = async () => {
       try {
-        const data = await apiFetch(`/api/goals/${familyId}`, { auth: true });
+        const data = await apiFetch(`/api/goals/${familyId}`);
         setGoals(data || []);
       } catch (err: any) {
         setError(err.message);
@@ -51,10 +51,9 @@ export const Goals: React.FC = () => {
     try {
       await apiFetch(`/api/goals/${familyId}`, {
         method: 'POST',
-        body: payload,
-        auth: true,
+        body: JSON.stringify(payload),
       });
-      const refreshed = await apiFetch(`/api/goals/${familyId}`, { auth: true });
+      const refreshed = await apiFetch(`/api/goals/${familyId}`);
       setGoals(refreshed);
       setTitle('');
       setTarget(0);
@@ -68,7 +67,6 @@ export const Goals: React.FC = () => {
     try {
       await apiFetch(`/api/goals/${familyId}/${goalId}`, {
         method: 'DELETE',
-        auth: true,
       });
       setGoals(goals.filter(g => g.id !== goalId));
     } catch (err: any) {

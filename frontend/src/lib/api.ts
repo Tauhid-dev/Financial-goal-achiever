@@ -3,65 +3,37 @@
  * Uses the Vite environment variable VITE_API_BASE_URL as the base URL.
  */
 
-export interface Token {
-  access_token: string;
-  token_type: string;
-}
+const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "";
 
-const TOKEN_KEY = 'auth_token';
+// Token handling
+export function setToken(token: string): void {
+  localStorage.setItem("token", token);
+}
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+  return localStorage.getItem("token");
 }
 
 export function clearToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("token");
 }
 
-/**
- * Wrapper around fetch that automatically prefixes the base URL,
- * adds JSON headers, and attaches the Authorization header when auth is true.
- *
- * @param path API path, e.g. `/api/auth/login`
- * @param options fetch options: method, body, auth flag
- */
-export async function apiFetch(
-  path: string,
-  {
-    method = 'GET',
-    body,
-    auth = false,
-    headers = {},
-  }: {
-    method?: string;
-    body?: any;
-    auth?: boolean;
-    headers?: Record<string, string>;
-  } = {}
-): Promise<any> {
-  const baseUrl = (import.meta as any).env.VITE_API_BASE_URL;
-  const url = `${baseUrl}${path}`;
-
-  const fetchHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...headers,
+// Generic request helper
+async function request(path: string, opts: RequestInit = {}): Promise<any> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(opts.headers as Record<string, string> || {}),
   };
 
-  if (auth) {
-    const token = getToken();
-    if (token) {
-      fetchHeaders['Authorization'] = `Bearer ${token}`;
-    }
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    method,
-    headers: fetchHeaders,
-    body: body ? JSON.stringify(body) : undefined,
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...opts,
+    headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
 
   if (!response.ok) {
@@ -71,4 +43,26 @@ export async function apiFetch(
 
   const text = await response.text();
   return text ? JSON.parse(text) : null;
+}
+
+// Exported wrapper for compatibility
+export async function apiFetch(path: string, opts: RequestInit = {}): Promise<any> {
+  return request(path, opts);
+}
+
+// Auth APIs
+export async function loginAPI(formData: URLSearchParams): Promise<any> {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Login error ${response.status}: ${errorText}`);
+  }
+  return response.json();
+}
+
+export async function meAPI(): Promise<any> {
+  return request("/api/auth/me");
 }
