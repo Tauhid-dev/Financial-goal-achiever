@@ -21,4 +21,6 @@ class Family(Base):
 
     # One-to-many relationship to members
     members = relationship("Member", back_populates="family", cascade="all, delete-orphan")
+    documents = relationship("Document", back_populates="family", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="family", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="family", cascade="all, delete-orphan")

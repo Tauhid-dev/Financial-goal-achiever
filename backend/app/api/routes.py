@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..services.pipeline import process_pdf
-from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, MonthlySummarySchema, TransactionSchema
+from backend.app.modules.models.schemas import FamilySchema, DocumentSchema, DocumentListItemSchema, MonthlySummarySchema, TransactionSchema, GoalDeleteResponseSchema, DefaultFamilyResponseSchema
 from backend.app.auth.deps import get_current_user
 from backend.app.db.models import User
 from backend.app.db.session import get_async_session
 from backend.app.db.repositories.document_repo import create_document, list_documents
-from backend.app.db.repositories.membership_repo import get_default_family_id_for_user
+import backend.app.db.repositories.membership_repo as membership_repo
 from backend.app.db.repositories.transaction_repo import bulk_create_transactions, list_transactions, top_expense_categories
 from backend.app.db.repositories.summary_repo import upsert_monthly_summaries, list_monthly_summaries
 from ..api.authz import assert_family_access
@@ -53,7 +53,7 @@ async def get_summary(
     rows = await list_monthly_summaries(session, family_id)
     return rows
 
-@router.get("/documents/{family_id}", response_model=list[DocumentSchema])
+@router.get("/documents/{family_id}", response_model=list[DocumentListItemSchema])
 async def get_documents(
     family_id: str,
     session: AsyncSession = Depends(get_async_session),
@@ -61,7 +61,20 @@ async def get_documents(
 ):
     await assert_family_access(session, current_user.id, family_id)
     rows = await list_documents(session, family_id)
-    return rows
+    # Transform ORM Document objects into lightweight list items
+    result = []
+    for doc in rows:
+        result.append(
+            DocumentListItemSchema(
+                id=doc.id,
+                family_id=doc.family_id,
+                filename=doc.filename,
+                uploaded_at=doc.uploaded_at,
+                status=doc.status,
+                source_type=doc.source_type,
+            )
+        )
+    return result
 
 @router.get("/transactions/{family_id}", response_model=list[TransactionSchema])
 async def get_transactions(
@@ -116,7 +129,7 @@ async def list_goals(
         result.append(GoalWithProjectionSchema(**goal_row_to_with_projection(g)))
     return result
 
-@router.delete("/goals/{family_id}/{goal_id}", response_model=dict)
+@router.delete("/goals/{family_id}/{goal_id}", response_model=GoalDeleteResponseSchema)
 async def delete_goal(
     family_id: str,
     goal_id: str,
@@ -128,7 +141,7 @@ async def delete_goal(
         ok = await repo_delete_goal(session, family_id, goal_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Goal not found")
-    return {"deleted": True}
+    return GoalDeleteResponseSchema(deleted=True)
 
 # -----------------------------------------------------------------
 # Insights – uses the InsightService
@@ -170,3 +183,12 @@ async def get_insights(
 
     # Build deterministic insights
     return build_insights(latest_summary, top_cats)
+
+
+@router.get("/me/default-family", response_model=DefaultFamilyResponseSchema)
+async def get_default_family(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    family_id = await membership_repo.get_default_family_id_for_user(session, current_user.id)
+    return DefaultFamilyResponseSchema(family_id=family_id)
