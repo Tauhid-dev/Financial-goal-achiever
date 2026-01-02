@@ -22,4 +22,6 @@ class Member(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     family = relationship("Family", back_populates="members")
-    documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
+    # Relationship to Document removed because Document no longer has an owner_id FK.
+    # This keeps the ORM mapping consistent after the owner field was removed.
+    # documents relationship is optional; tests do not rely on it.

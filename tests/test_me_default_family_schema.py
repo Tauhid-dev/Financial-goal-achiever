@@ -13,16 +13,12 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def override_deps(monkeypatch):
-    # Override auth dependency to bypass JWT check
+    # Override auth dependency
     monkeypatch.setattr(
         "backend.app.auth.deps.get_current_user",
         lambda: DummyUser()
     )
-    # Also override the imported reference used in the route
-    monkeypatch.setattr(
-        "backend.app.api.routes.get_current_user",
-        lambda: DummyUser()
-    )
+    # Override the route's get_current_user reference
     monkeypatch.setattr(
         "backend.app.api.routes.get_current_user",
         lambda: DummyUser()
@@ -30,12 +26,17 @@ def override_deps(monkeypatch):
     # Override family lookup
     monkeypatch.setattr(
         "backend.app.db.repositories.membership_repo.get_default_family_id_for_user",
-        lambda session, user_id: "f1",
+        lambda session, user_id: "f1"
     )
-    # Override async DB session to avoid aiosqlite requirement
+    # Override async DB session
     monkeypatch.setattr(
         "backend.app.db.session.get_async_session",
-        lambda: None,
+        lambda: None
+    )
+    # Ensure the auth dependency is used (override get_current_user)
+    monkeypatch.setattr(
+        "backend.app.auth.deps.get_current_user",
+        lambda: DummyUser()
     )
     yield
     # Cleanup is automatic

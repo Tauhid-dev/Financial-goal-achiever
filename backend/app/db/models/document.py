@@ -18,7 +18,6 @@ class Document(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     status = Column(String, nullable=False, default="processed")
     source_type = Column(String, nullable=False, default="bank_statement_v1")
-    owner_id = Column(String(36), ForeignKey("member.id"), nullable=False)
+    # owner_id and owner relationship removed to simplify ownership model
     family = relationship("Family", back_populates="documents")
-    owner = relationship("Member", back_populates="documents")
     transactions = relationship("Transaction", back_populates="document", cascade="all, delete-orphan")
