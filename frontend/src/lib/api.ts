@@ -30,11 +30,19 @@ async function request(path: string, opts: RequestInit = {}): Promise<any> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...opts,
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  // Determine request body handling:
+  let requestBody: any = undefined;
+  if (typeof opts.body === "string") {
+    requestBody = opts.body;
+  } else if (opts.body !== undefined) {
+    requestBody = JSON.stringify(opts.body);
+  }
+
+    const response = await fetch(`${BASE_URL}${path}`, {
+      ...opts,
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
 
   if (!response.ok) {
     const errorText = await response.text();
