@@ -20,8 +20,11 @@ export function clearToken(): void {
 
 // Generic request helper
 async function request(path: string, opts: RequestInit = {}): Promise<any> {
+  // Determine request body handling and headers
+  const isFormData = typeof FormData !== "undefined" && opts.body instanceof FormData;
+
+  // Start with provided headers
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(opts.headers as Record<string, string> || {}),
   };
 
@@ -30,19 +33,27 @@ async function request(path: string, opts: RequestInit = {}): Promise<any> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // Determine request body handling:
+  // Set Content-Type for JSON bodies if not FormData and not already set
   let requestBody: any = undefined;
-  if (typeof opts.body === "string") {
+  if (opts.body === undefined) {
+    requestBody = undefined;
+  } else if (isFormData) {
     requestBody = opts.body;
-  } else if (opts.body !== undefined) {
+    // Do not set Content-Type for FormData
+  } else if (typeof opts.body === "string") {
+    requestBody = opts.body;
+  } else {
     requestBody = JSON.stringify(opts.body);
+    if (!headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
   }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
-      ...opts,
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-    });
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...opts,
+    headers,
+    body: requestBody,
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
