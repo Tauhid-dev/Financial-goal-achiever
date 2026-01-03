@@ -49,11 +49,14 @@ async function request(path: string, opts: RequestInit = {}): Promise<any> {
     }
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const fetchOptions: RequestInit = {
     ...opts,
     headers,
-    body: requestBody,
-  });
+  };
+  if (requestBody !== undefined) {
+    fetchOptions.body = requestBody;
+  }
+  const response = await fetch(`${BASE_URL}${path}`, fetchOptions);
 
   if (!response.ok) {
     const errorText = await response.text();
