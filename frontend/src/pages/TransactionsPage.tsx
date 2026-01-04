@@ -26,9 +26,13 @@ export const TransactionsPage: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
-await fetchTxns(fid);
+        const { scopeId, familyId } = await ensureSession();
+        const fid = familyId ?? scopeId;
+        if (!fid) {
+          setError("No family scope yet");
+          return;
+        }
+        await fetchTxns(fid);
       } catch (err: any) {
         setError(err.message);
       } finally {

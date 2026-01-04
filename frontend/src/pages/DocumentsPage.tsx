@@ -18,7 +18,11 @@ export const DocumentsPage: React.FC = () => {
     if (!file) return;
     try {
       const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
+      const fid = familyId ?? scopeId;
+      if (!fid) {
+        setError("No family scope yet");
+        return;
+      }
       await uploadDocument(fid, file);
       await fetchDocs(fid);
       setFile(null);
@@ -31,7 +35,11 @@ const fid = familyId ?? scopeId;
     const init = async () => {
       try {
         const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
+        const fid = familyId ?? scopeId;
+        if (!fid) {
+          setError("No family scope yet");
+          return;
+        }
         await fetchDocs(fid);
       } catch (err: any) {
         setError(err.message);

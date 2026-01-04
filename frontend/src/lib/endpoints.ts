@@ -13,6 +13,11 @@ export const listGoals = async (familyId: string): Promise<GoalWithProjection[]>
   return apiFetch(`/api/goals/${familyId}`);
 };
 
+export const familyPath = (familyId: string, suffix: string): string => {
+  // Centralised              ...
+  return `/api/${suffix}/${familyId}`;
+};
+
 export const createGoal = async (
   familyId: string,
   payload: GoalCreate

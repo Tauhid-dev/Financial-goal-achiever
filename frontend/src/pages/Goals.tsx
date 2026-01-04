@@ -23,10 +23,14 @@ export const Goals: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
-await createGoal(fid, newGoal);
-await fetchGoals(fid);
+      const { scopeId, familyId } = await ensureSession();
+      const fid = familyId ?? scopeId;
+      if (!fid) {
+        setError("No family scope yet");
+        return;
+      }
+      await createGoal(fid, newGoal);
+      await fetchGoals(fid);
       setNewGoal({
         name: '',
         target_amount: 0,
@@ -41,10 +45,14 @@ await fetchGoals(fid);
 
   const deleteGoalHandler = async (goalId: string) => {
     try {
-const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
-await deleteGoal(fid, goalId);
-await fetchGoals(fid);
+      const { scopeId, familyId } = await ensureSession();
+      const fid = familyId ?? scopeId;
+      if (!fid) {
+        setError("No family scope yet");
+        return;
+      }
+      await deleteGoal(fid, goalId);
+      await fetchGoals(fid);
     } catch (err: any) {
       setError(err.message);
     }

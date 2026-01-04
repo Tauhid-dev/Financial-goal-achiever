@@ -11,7 +11,11 @@ export const SummaryPage: React.FC = () => {
     const fetchData = async () => {
       try {
         const { scopeId, familyId } = await ensureSession();
-const fid = familyId ?? scopeId;
+        const fid = familyId ?? scopeId;
+        if (!fid) {
+          setError("No family scope yet");
+          return;
+        }
         const data = await listSummaries(fid);
         setSummaries(data);
       } catch (err: any) {
