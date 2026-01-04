@@ -59,6 +59,9 @@ async function request(path: string, opts: RequestInit = {}): Promise<any> {
   const response = await fetch(`${BASE_URL}${path}`, fetchOptions);
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearToken();
+    }
     const errorText = await response.text();
     throw new Error(`API error ${response.status}: ${errorText}`);
   }

@@ -32,6 +32,16 @@ export interface MonthlySummary {
   savings_rate: number;
 }
 
+export interface Document {
+  id: string;
+  family_id: string;
+  filename: string;
+  uploaded_at: string;
+  transactions_inserted?: number | null;
+  months_upserted?: number | null;
+  pipeline_result?: any;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
