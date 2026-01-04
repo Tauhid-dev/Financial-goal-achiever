@@ -5,9 +5,9 @@
 export interface GoalCreate {
   name: string;
   target_amount: number;
-  current_amount: number;
-  monthly_contribution: number;
-  target_date?: string; // ISO date string, optional
+  current_amount?: number;
+  monthly_contribution?: number;
+  target_date?: string | null;
 }
 
 export interface GoalProjection {
@@ -17,15 +17,15 @@ export interface GoalProjection {
 }
 
 export interface GoalWithProjection extends GoalCreate {
-  id: number;
-  family_id: number;
+  id: string;
+  family_id: string;
   projection?: GoalProjection | null;
 }
 
 export interface MonthlySummary {
-  id: number;
-  family_id: number;
-  month: string; // e.g., "2024-01"
+  id: string;
+  family_id: string;
+  month: string;
   income: number;
   expenses: number;
   savings: number;

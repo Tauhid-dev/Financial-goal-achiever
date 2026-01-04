@@ -5,7 +5,7 @@ import { GoalCreate, GoalWithProjection } from '../lib/types';
 export const Goals: React.FC = () => {
   const [familyId, setFamilyId] = useState<string>('');
   const [goals, setGoals] = useState<GoalWithProjection[]>([]);
-  const [title, setTitle] = useState('');
+  const [name, setName] = useState('');
   const [target, setTarget] = useState<number>(0);
   const [error, setError] = useState('');
   // No navigation library; we will reload on logout
@@ -47,7 +47,7 @@ export const Goals: React.FC = () => {
     e.preventDefault();
     if (!familyId) return;
     const payload: GoalCreate = {
-      name: title,
+      name,
       target_amount: target,
       current_amount: 0,
       monthly_contribution: 0,
@@ -59,14 +59,14 @@ export const Goals: React.FC = () => {
       });
       const refreshed = await apiFetch(`/api/goals/${familyId}`);
       setGoals(refreshed);
-      setTitle('');
+      setName('');
       setTarget(0);
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const handleDelete = async (goalId: number) => {
+  const handleDelete = async (goalId: string) => {
     if (!familyId) return;
     try {
       await apiFetch(`/api/goals/${familyId}/${goalId}`, {
@@ -91,8 +91,8 @@ export const Goals: React.FC = () => {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleCreate}>
         <div>
-          <label>Title:</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} required />
+          <label>Name:</label>
+          <input value={name} onChange={e => setName(e.target.value)} required />
         </div>
         <div>
           <label>Target Amount:</label>
