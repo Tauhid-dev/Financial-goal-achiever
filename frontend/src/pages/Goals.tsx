@@ -23,9 +23,10 @@ export const Goals: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { familyId } = await ensureSession();
-      await createGoal(familyId, newGoal);
-      await fetchGoals(familyId);
+const { scopeId, familyId } = await ensureSession();
+const fid = familyId ?? scopeId;
+await createGoal(fid, newGoal);
+await fetchGoals(fid);
       setNewGoal({
         name: '',
         target_amount: 0,
@@ -40,9 +41,10 @@ export const Goals: React.FC = () => {
 
   const deleteGoalHandler = async (goalId: string) => {
     try {
-      const { familyId } = await ensureSession();
-      await deleteGoal(familyId, goalId);
-      await fetchGoals(familyId);
+const { scopeId, familyId } = await ensureSession();
+const fid = familyId ?? scopeId;
+await deleteGoal(fid, goalId);
+await fetchGoals(fid);
     } catch (err: any) {
       setError(err.message);
     }
@@ -51,8 +53,9 @@ export const Goals: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { familyId } = await ensureSession();
-        await fetchGoals(familyId);
+        const { scopeId, familyId } = await ensureSession();
+        const fid = familyId ?? scopeId;
+        await fetchGoals(fid);
       } catch (err: any) {
         setError(err.message);
       } finally {

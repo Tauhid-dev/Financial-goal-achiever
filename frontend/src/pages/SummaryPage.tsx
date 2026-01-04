@@ -10,8 +10,9 @@ export const SummaryPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { familyId } = await ensureSession();
-        const data = await listSummaries(familyId);
+        const { scopeId, familyId } = await ensureSession();
+const fid = familyId ?? scopeId;
+        const data = await listSummaries(fid);
         setSummaries(data);
       } catch (err: any) {
         setError(err.message);

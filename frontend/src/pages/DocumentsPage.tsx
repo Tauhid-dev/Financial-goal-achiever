@@ -17,9 +17,10 @@ export const DocumentsPage: React.FC = () => {
   const handleUpload = async () => {
     if (!file) return;
     try {
-      const { familyId } = await ensureSession();
-      await uploadDocument(familyId, file);
-      await fetchDocs(familyId);
+      const { scopeId, familyId } = await ensureSession();
+const fid = familyId ?? scopeId;
+      await uploadDocument(fid, file);
+      await fetchDocs(fid);
       setFile(null);
     } catch (err: any) {
       setError(err.message);
@@ -29,8 +30,9 @@ export const DocumentsPage: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { familyId } = await ensureSession();
-        await fetchDocs(familyId);
+        const { scopeId, familyId } = await ensureSession();
+const fid = familyId ?? scopeId;
+        await fetchDocs(fid);
       } catch (err: any) {
         setError(err.message);
       } finally {

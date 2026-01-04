@@ -1,62 +1,62 @@
 import { apiFetch, meAPI } from "./api";
 
-/**
- * Session helper – determines the current user and default family.
- * Stores the family ID in localStorage under "family_id".
- */
+export const SCOPE_TYPE_KEY = "scope_type";
+export const SCOPE_ID_KEY = "scope_id";
 
-export const FAMILY_ID_KEY = "family_id";
+export const getScope = (): { scope_type: string; scope_id: string } | null => {
+  const type = localStorage.getItem(SCOPE_TYPE_KEY);
+  const id = localStorage.getItem(SCOPE_ID_KEY);
+  return type && id ? { scope_type: type, scope_id: id } : null;
+};
 
-/**
- * Retrieve stored family ID.
- */
-export const getFamilyId = (): string | null => {
-  return localStorage.getItem(FAMILY_ID_KEY);
+export const setScope = (type: string, id: string): void => {
+  localStorage.setItem(SCOPE_TYPE_KEY, type);
+  localStorage.setItem(SCOPE_ID_KEY, id);
 };
 
 /**
- * Store family ID.
+ * Initialise session – verifies auth token and resolves the default scope.
+ * Returns generic scope fields plus a backward‑compatible `familyId` when applicable.
  */
-export const setFamilyId = (familyId: string): void => {
-  localStorage.setItem(FAMILY_ID_KEY, familyId);
-};
+export const ensureSession = async (): Promise<{
+  scopeType: string;
+  scopeId: string;
+  familyId?: string;
+}> => {
+  // Verify token via /api/auth/me (throws on 401)
+  await meAPI();
 
-/**
- * Initialise session:
- *  - Verify token via /api/auth/me (throws if invalid)
- *  - Attempt to fetch default family via /api/me/default-family
- *    (fallback to /api/families/default if endpoint missing)
- *  - Store family ID for later use.
- */
-export const ensureSession = async (): Promise<{ user: any; familyId: string }> => {
-  // Get current user (throws on 401)
-  const user = await meAPI();
-
-  // Check if familyId already stored
-  let familyId = getFamilyId();
-  if (familyId) {
-    return { user, familyId };
+  // Check if we already have a stored scope
+  const stored = getScope();
+  if (stored) {
+    return {
+      scopeType: stored.scope_type,
+      scopeId: stored.scope_id,
+      familyId: stored.scope_type === "family" ? stored.scope_id : undefined,
+    };
   }
 
-  // Try default-family endpoint
+  // Try the new generic endpoint first
   try {
-    const data = await apiFetch("/api/me/default-family");
-    if (data && data.id) {
-      familyId = String(data.id);
-      setFamilyId(familyId);
-      return { user, familyId };
-    }
+    const data = await apiFetch("/api/scopes/default");
+    const scopeType = data.scope_type;
+    const scopeId = String(data.scope_id);
+    setScope(scopeType, scopeId);
+    return {
+      scopeType,
+      scopeId,
+      familyId: scopeType === "family" ? scopeId : undefined,
+    };
   } catch {
-    // ignore, fallback
+    // Fallback to legacy family endpoint
+    const data = await apiFetch("/api/me/default-family");
+    const scopeType = "family";
+    const scopeId = String(data.id);
+    setScope(scopeType, scopeId);
+    return {
+      scopeType,
+      scopeId,
+      familyId: scopeId,
+    };
   }
-
-  // Fallback to families/default
-  const fallback = await apiFetch("/api/families/default");
-  if (fallback && fallback.id) {
-    familyId = String(fallback.id);
-    setFamilyId(familyId);
-    return { user, familyId };
-  }
-
-  throw new Error("Unable to determine default family ID");
 };
