@@ -42,6 +42,17 @@ export interface Document {
   pipeline_result?: any;
 }
 
+/**
+ * Transaction interface for the Transactions page.
+ */
+export interface Transaction {
+  id: string;
+  family_id: string;
+  date: string;
+  description: string;
+  amount: number;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;

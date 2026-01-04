@@ -28,26 +28,35 @@ export const setFamilyId = (familyId: string): void => {
  *    (fallback to /api/families/default if endpoint missing)
  *  - Store family ID for later use.
  */
-export const initSession = async (): Promise<void> => {
-  // Verify token – will throw on 401
-  await meAPI();
+export const ensureSession = async (): Promise<{ user: any; familyId: string }> => {
+  // Get current user (throws on 401)
+  const user = await meAPI();
+
+  // Check if familyId already stored
+  let familyId = getFamilyId();
+  if (familyId) {
+    return { user, familyId };
+  }
 
   // Try default-family endpoint
   try {
     const data = await apiFetch("/api/me/default-family");
     if (data && data.id) {
-      setFamilyId(String(data.id));
-      return;
+      familyId = String(data.id);
+      setFamilyId(familyId);
+      return { user, familyId };
     }
   } catch {
-    // Endpoint may not exist
+    // ignore, fallback
   }
 
-  // Fallback: use families/default
+  // Fallback to families/default
   const fallback = await apiFetch("/api/families/default");
   if (fallback && fallback.id) {
-    setFamilyId(String(fallback.id));
-  } else {
-    console.warn("Unable to determine default family ID.");
+    familyId = String(fallback.id);
+    setFamilyId(familyId);
+    return { user, familyId };
   }
+
+  throw new Error("Unable to determine default family ID");
 };

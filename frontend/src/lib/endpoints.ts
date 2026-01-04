@@ -44,6 +44,26 @@ export const listDocuments = async (familyId: string): Promise<Document[]> => {
   return apiFetch(`/api/documents/${familyId}`);
 };
 
+export const uploadDocument = async (familyId: string, file: File): Promise<Document> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch(`/api/documents/${familyId}`, {
+    method: "POST",
+    body: formData,
+  });
+};
+
+/**
+ * Transactions endpoint – returns a list of transactions for a family.
+ */
+export const listTransactions = async (
+  familyId: string,
+  params?: { month?: string; limit?: number; offset?: number }
+): Promise<any[]> => {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+  return apiFetch(`/api/transactions/${familyId}${query}`);
+};
+
 /**
  * Placeholder for insights – returns unknown type
  */
