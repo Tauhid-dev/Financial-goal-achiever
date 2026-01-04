@@ -2,26 +2,37 @@
  * TypeScript interfaces mirroring backend response shapes.
  */
 
-export interface Token {
-  access_token: string;
-  token_type: string;
-}
-
-export interface UserRead {
-  id: number;
-  email: string;
-  is_active: boolean;
-  is_superuser: boolean;
-  // add other fields as needed
-}
-
 export interface GoalCreate {
-  title: string;
+  name: string;
   target_amount: number;
-  // add other fields required by backend schema
+  current_amount: number;
+  monthly_contribution: number;
+  target_date?: string; // ISO date string, optional
+}
+
+export interface GoalProjection {
+  months_required: number;
+  years_required: number;
+  is_achievable: boolean;
 }
 
 export interface GoalWithProjection extends GoalCreate {
   id: number;
-  // projection fields (e.g., progress, remaining) can be added here
+  family_id: number;
+  projection?: GoalProjection | null;
+}
+
+export interface MonthlySummary {
+  id: number;
+  family_id: number;
+  month: string; // e.g., "2024-01"
+  income: number;
+  expenses: number;
+  savings: number;
+  savings_rate: number;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
 }

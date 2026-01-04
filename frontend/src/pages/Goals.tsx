@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch, clearToken } from '../lib/api';
 import { GoalCreate, GoalWithProjection } from '../lib/types';
-import { useNavigate } from 'react-router-dom';
 
 export const Goals: React.FC = () => {
   const [familyId, setFamilyId] = useState<string>('');
@@ -9,7 +8,7 @@ export const Goals: React.FC = () => {
   const [title, setTitle] = useState('');
   const [target, setTarget] = useState<number>(0);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  // No navigation library; we will reload on logout
 
   // fetch default family id
   useEffect(() => {
@@ -47,7 +46,12 @@ export const Goals: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!familyId) return;
-    const payload: GoalCreate = { title, target_amount: target };
+    const payload: GoalCreate = {
+      name: title,
+      target_amount: target,
+      current_amount: 0,
+      monthly_contribution: 0,
+    };
     try {
       await apiFetch(`/api/goals/${familyId}`, {
         method: 'POST',
@@ -76,7 +80,8 @@ export const Goals: React.FC = () => {
 
   const handleLogout = () => {
     clearToken();
-    navigate('/login');
+    // Reload to show login screen
+    window.location.reload();
   };
 
   return (
@@ -98,7 +103,7 @@ export const Goals: React.FC = () => {
       <ul>
         {goals.map(g => (
           <li key={g.id}>
-            {g.title} - {g.target_amount}{' '}
+            {g.name} - {g.target_amount}{' '}
             <button onClick={() => handleDelete(g.id)}>Delete</button>
           </li>
         ))}
