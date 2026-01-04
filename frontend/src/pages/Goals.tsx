@@ -1,113 +1,138 @@
 import React, { useEffect, useState } from 'react';
-import { apiFetch, clearToken } from '../lib/api';
-import { GoalCreate, GoalWithProjection } from '../lib/types';
+import { ensureSession } from '../lib/session';
+import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
+import { GoalWithProjection, GoalCreate } from '../lib/types';
 
 export const Goals: React.FC = () => {
-  const [familyId, setFamilyId] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [goals, setGoals] = useState<GoalWithProjection[]>([]);
-  const [name, setName] = useState('');
-  const [target, setTarget] = useState<number>(0);
-  const [error, setError] = useState('');
-  // No navigation library; we will reload on logout
+  const [newGoal, setNewGoal] = useState<GoalCreate>({
+    name: '',
+    target_amount: 0,
+    current_amount: undefined,
+    monthly_contribution: undefined,
+    target_date: null,
+  });
 
-  // fetch default family id
-  useEffect(() => {
-    const fetchFamily = async () => {
-      try {
-        const data = await apiFetch('/api/families/default');
-        if (data && data.id) {
-          setFamilyId(String(data.id));
-        } else {
-          const manual = prompt('Enter your family ID:');
-          if (manual) setFamilyId(manual);
-        }
-      } catch {
-        const manual = prompt('Enter your family ID:');
-        if (manual) setFamilyId(manual);
-      }
-    };
-    fetchFamily();
-  }, []);
-
-  // fetch goals when familyId is set
-  useEffect(() => {
-    if (!familyId) return;
-    const fetchGoals = async () => {
-      try {
-        const data = await apiFetch(`/api/goals/${familyId}`);
-        setGoals(data || []);
-      } catch (err: any) {
-        setError(err.message);
-      }
-    };
-    fetchGoals();
-  }, [familyId]);
+  const fetchGoals = async (familyId: string) => {
+    const data = await listGoals(familyId);
+    setGoals(data);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!familyId) return;
-    const payload: GoalCreate = {
-      name,
-      target_amount: target,
-      current_amount: 0,
-      monthly_contribution: 0,
+    try {
+      const { familyId } = await ensureSession();
+      await createGoal(familyId, newGoal);
+      await fetchGoals(familyId);
+      setNewGoal({
+        name: '',
+        target_amount: 0,
+        current_amount: undefined,
+        monthly_contribution: undefined,
+        target_date: null,
+      });
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const deleteGoalHandler = async (goalId: string) => {
+    try {
+      const { familyId } = await ensureSession();
+      await deleteGoal(familyId, goalId);
+      await fetchGoals(familyId);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const { familyId } = await ensureSession();
+        await fetchGoals(familyId);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
-    try {
-      await apiFetch(`/api/goals/${familyId}`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      const refreshed = await apiFetch(`/api/goals/${familyId}`);
-      setGoals(refreshed);
-      setName('');
-      setTarget(0);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
+    init();
+  }, []);
 
-  const handleDelete = async (goalId: string) => {
-    if (!familyId) return;
-    try {
-      await apiFetch(`/api/goals/${familyId}/${goalId}`, {
-        method: 'DELETE',
-      });
-      setGoals(goals.filter(g => g.id !== goalId));
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleLogout = () => {
-    clearToken();
-    // Reload to show login screen
-    window.location.reload();
-  };
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   return (
     <div>
       <h2>Goals</h2>
-      <button onClick={handleLogout}>Logout</button>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleCreate}>
-        <div>
-          <label>Name:</label>
-          <input value={name} onChange={e => setName(e.target.value)} required />
-        </div>
-        <div>
-          <label>Target Amount:</label>
-          <input type="number" value={target} onChange={e => setTarget(Number(e.target.value))} required />
-        </div>
+
+      <form onSubmit={handleCreate} style={{ marginBottom: '1rem' }}>
+        <input
+          type="text"
+          placeholder="Name"
+          value={newGoal.name}
+          onChange={e => setNewGoal({ ...newGoal, name: e.target.value })}
+          required
+        />
+        <input
+          type="number"
+          placeholder="Target Amount"
+          value={newGoal.target_amount}
+          onChange={e => setNewGoal({ ...newGoal, target_amount: Number(e.target.value) })}
+          required
+        />
+        <input
+          type="number"
+          placeholder="Current Amount"
+          value={newGoal.current_amount ?? ''}
+          onChange={e =>
+            setNewGoal({
+              ...newGoal,
+              current_amount: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+        />
+        <input
+          type="number"
+          placeholder="Monthly Contribution"
+          value={newGoal.monthly_contribution ?? ''}
+          onChange={e =>
+            setNewGoal({
+              ...newGoal,
+              monthly_contribution: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+        />
+        <input
+          type="date"
+          placeholder="Target Date"
+          value={newGoal.target_date ?? ''}
+          onChange={e => setNewGoal({ ...newGoal, target_date: e.target.value || null })}
+        />
         <button type="submit">Create Goal</button>
       </form>
+
       <ul>
-        {goals.map(g => (
-          <li key={g.id}>
-            {g.name} - {g.target_amount}{' '}
-            <button onClick={() => handleDelete(g.id)}>Delete</button>
+        {goals.map(goal => (
+          <li key={goal.id}>
+            <strong>{goal.name}</strong> – Target: {goal.target_amount}
+            {goal.projection && (
+              <span>
+                {' '}| Months Required: {goal.projection.months_required}
+                {' '}| Achievable: {goal.projection.is_achievable ? 'Yes' : 'No'}
+              </span>
+            )}
+            <button onClick={() => deleteGoalHandler(goal.id)} style={{ marginLeft: '1rem' }}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>
     </div>
   );
 };
+
+export default Goals;
