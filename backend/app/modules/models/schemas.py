@@ -125,7 +125,8 @@ class ScopeSchema(BaseModel):
     """
     Generic scope representation.
     """
-    scope_type: str
-    scope_id: str
+    id: str
+    type: str  # literal "family"
+    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -36,27 +36,29 @@ export const ensureSession = async (): Promise<{
     };
   }
 
-  // Try the new generic endpoint first
-  try {
-    const data = await apiFetch("/api/scopes/default");
-    const scopeType = data.scope_type;
-    const scopeId = String(data.scope_id);
+  // Fetch list of scopes
+  const scopesResponse = await apiFetch("/api/scopes");
+  const scopes = await scopesResponse.json();
+  if (Array.isArray(scopes) && scopes.length > 0) {
+    const first = scopes[0];
+    const scopeType = first.type;
+    const scopeId = String(first.id);
     setScope(scopeType, scopeId);
     return {
       scopeType,
       scopeId,
       familyId: scopeType === "family" ? scopeId : undefined,
     };
-  } catch {
-    // Fallback to legacy family endpoint
-    const data = await apiFetch("/api/me/default-family");
-    const scopeType = "family";
-    const scopeId = String(data.id);
-    setScope(scopeType, scopeId);
-    return {
-      scopeType,
-      scopeId,
-      familyId: scopeId,
-    };
   }
+
+  // Fallback to legacy family endpoint
+  const data = await apiFetch("/api/me/default-family");
+  const scopeType = "family";
+  const scopeId = String(data.family_id);
+  setScope(scopeType, scopeId);
+  return {
+    scopeType,
+    scopeId,
+    familyId: scopeId,
+  };
 };

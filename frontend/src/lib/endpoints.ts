@@ -4,6 +4,7 @@ import {
   GoalWithProjection,
   MonthlySummary,
   Document,
+  Scope,
 } from "./types";
 
 /**
@@ -11,6 +12,10 @@ import {
  */
 export const listGoals = async (familyId: string): Promise<GoalWithProjection[]> => {
   return apiFetch(`/api/goals/${familyId}`);
+};
+
+export const listScopes = async (): Promise<Scope[]> => {
+  return apiFetch("/api/scopes");
 };
 
 export const familyPath = (familyId: string, suffix: string): string => {
