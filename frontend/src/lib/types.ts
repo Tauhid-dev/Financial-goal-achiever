@@ -60,6 +60,6 @@ export interface TokenResponse {
 
 export interface Scope {
   id: string;
-  type: "family";
+  type: string;
   name?: string | null;
 }

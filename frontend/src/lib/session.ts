@@ -1,4 +1,5 @@
 import { apiFetch, meAPI } from "./api";
+import { Scope } from "./types";
 
 export const SCOPE_TYPE_KEY = "scope_type";
 export const SCOPE_ID_KEY = "scope_id";
@@ -37,8 +38,7 @@ export const ensureSession = async (): Promise<{
   }
 
   // Fetch list of scopes
-  const scopesResponse = await apiFetch("/api/scopes");
-  const scopes = await scopesResponse.json();
+  const scopes: Scope[] = await apiFetch("/api/scopes");
   if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
     const scopeType = first.type;
