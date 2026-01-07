@@ -19,7 +19,7 @@ export function clearToken(): void {
 }
 
 // Generic request helper
-async function request(path: string, opts: RequestInit = {}): Promise<any> {
+async function request<T = any>(path: string, opts: RequestInit = {}): Promise<T | null> {
   // Determine request body handling and headers
   const isFormData = typeof FormData !== "undefined" && opts.body instanceof FormData;
 
