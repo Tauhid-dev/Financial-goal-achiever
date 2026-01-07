@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
 import { GoalWithProjection, GoalCreate } from '../lib/types';
+import { ScopeRef } from '../lib/scope';
 
 export const Goals: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -15,22 +16,18 @@ export const Goals: React.FC = () => {
     target_date: null,
   });
 
-  const fetchGoals = async (familyId: string) => {
-    const data = await listGoals(familyId);
+  const fetchGoals = async (scope: ScopeRef) => {
+    const data = await listGoals(scope);
     setGoals(data);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { scopeId, familyId } = await ensureSession();
-      const fid = familyId ?? scopeId;
-      if (!fid) {
-        setError("No family scope yet");
-        return;
-      }
-      await createGoal(fid, newGoal);
-      await fetchGoals(fid);
+  const scope = await ensureSession();
+      // No additional fid check needed – scope already validated
+      await createGoal(scope, newGoal);
+      await fetchGoals(scope);
       setNewGoal({
         name: '',
         target_amount: 0,
@@ -45,14 +42,10 @@ export const Goals: React.FC = () => {
 
   const deleteGoalHandler = async (goalId: string) => {
     try {
-      const { scopeId, familyId } = await ensureSession();
-      const fid = familyId ?? scopeId;
-      if (!fid) {
-        setError("No family scope yet");
-        return;
-      }
-      await deleteGoal(fid, goalId);
-      await fetchGoals(fid);
+      const scope = await ensureSession();
+      // No additional fid check needed – scope already validated
+      await deleteGoal(scope, goalId);
+      await fetchGoals(scope);
     } catch (err: any) {
       setError(err.message);
     }
@@ -61,9 +54,8 @@ export const Goals: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { scopeId, familyId } = await ensureSession();
-        const fid = familyId ?? scopeId;
-        await fetchGoals(fid);
+        const scope = await ensureSession();
+        await fetchGoals(scope);
       } catch (err: any) {
         setError(err.message);
       } finally {

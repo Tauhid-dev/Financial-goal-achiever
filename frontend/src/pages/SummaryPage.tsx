@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listSummaries } from '../lib/endpoints';
+import { ScopeRef } from '../lib/scope';
 
 export const SummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -10,13 +11,8 @@ export const SummaryPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { scopeId, familyId } = await ensureSession();
-        const fid = familyId ?? scopeId;
-        if (!fid) {
-          setError("No family scope yet");
-          return;
-        }
-        const data = await listSummaries(fid);
+        const scope = await ensureSession();
+        const data = await listSummaries(scope);
         setSummaries(data);
       } catch (err: any) {
         setError(err.message);

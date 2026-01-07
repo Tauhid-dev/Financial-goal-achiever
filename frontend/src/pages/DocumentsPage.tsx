@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listDocuments, uploadDocument } from '../lib/endpoints';
 import { Document } from '../lib/types';
+import { ScopeRef } from '../lib/scope';
 
 export const DocumentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -9,22 +10,17 @@ export const DocumentsPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [file, setFile] = useState<File | null>(null);
 
-  const fetchDocs = async (familyId: string) => {
-    const docs = await listDocuments(familyId);
+  const fetchDocs = async (scope: ScopeRef) => {
+    const docs = await listDocuments(scope);
     setDocuments(docs);
   };
 
   const handleUpload = async () => {
     if (!file) return;
     try {
-      const { scopeId, familyId } = await ensureSession();
-      const fid = familyId ?? scopeId;
-      if (!fid) {
-        setError("No family scope yet");
-        return;
-      }
-      await uploadDocument(fid, file);
-      await fetchDocs(fid);
+      const scope = await ensureSession();
+      await uploadDocument(scope, file);
+      await fetchDocs(scope);
       setFile(null);
     } catch (err: any) {
       setError(err.message);
@@ -34,13 +30,8 @@ export const DocumentsPage: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { scopeId, familyId } = await ensureSession();
-        const fid = familyId ?? scopeId;
-        if (!fid) {
-          setError("No family scope yet");
-          return;
-        }
-        await fetchDocs(fid);
+        const scope = await ensureSession();
+        await fetchDocs(scope);
       } catch (err: any) {
         setError(err.message);
       } finally {

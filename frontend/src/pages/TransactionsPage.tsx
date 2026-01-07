@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listTransactions } from '../lib/endpoints';
 import { Transaction } from '../lib/types';
+import { ScopeRef } from '../lib/scope';
 
 export const TransactionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -11,12 +12,12 @@ export const TransactionsPage: React.FC = () => {
   const limit = 20;
   const [monthFilter, setMonthFilter] = useState<string>('');
 
-  const fetchTxns = async (familyId: string) => {
+  const fetchTxns = async (scope: ScopeRef) => {
     const params: any = { limit, offset };
     if (monthFilter) {
       params.month = monthFilter;
     }
-    const data = await listTransactions(familyId, params);
+    const data = await listTransactions(scope, params);
     setTransactions(data);
   };
 
@@ -26,13 +27,8 @@ export const TransactionsPage: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { scopeId, familyId } = await ensureSession();
-        const fid = familyId ?? scopeId;
-        if (!fid) {
-          setError("No family scope yet");
-          return;
-        }
-        await fetchTxns(fid);
+        const scope = await ensureSession();
+        await fetchTxns(scope);
       } catch (err: any) {
         setError(err.message);
       } finally {

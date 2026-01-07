@@ -1,64 +1,46 @@
 import { apiFetch, meAPI } from "./api";
-import { Scope } from "./types";
+import { ScopeRef } from "./scope";
 
-export const SCOPE_TYPE_KEY = "scope_type";
+export const SCOPE_KIND_KEY = "scope_kind";
 export const SCOPE_ID_KEY = "scope_id";
 
-export const getScope = (): { scope_type: string; scope_id: string } | null => {
-  const type = localStorage.getItem(SCOPE_TYPE_KEY);
+export const getScope = (): ScopeRef | null => {
+  const kind = localStorage.getItem(SCOPE_KIND_KEY) as ScopeRef["kind"] | null;
   const id = localStorage.getItem(SCOPE_ID_KEY);
-  return type && id ? { scope_type: type, scope_id: id } : null;
+  return kind && id ? { kind, id } : null;
 };
 
-export const setScope = (type: string, id: string): void => {
-  localStorage.setItem(SCOPE_TYPE_KEY, type);
-  localStorage.setItem(SCOPE_ID_KEY, id);
+export const setScope = (scope: ScopeRef): void => {
+  localStorage.setItem(SCOPE_KIND_KEY, scope.kind);
+  localStorage.setItem(SCOPE_ID_KEY, scope.id);
 };
 
 /**
  * Initialise session – verifies auth token and resolves the default scope.
- * Returns generic scope fields plus a backward‑compatible `familyId` when applicable.
+ * Returns a ScopeRef (family MVP now).
  */
-export const ensureSession = async (): Promise<{
-  scopeType: string;
-  scopeId: string;
-  familyId?: string;
-}> => {
+export const ensureSession = async (): Promise<ScopeRef> => {
   // Verify token via /api/auth/me (throws on 401)
   await meAPI();
 
   // Check if we already have a stored scope
   const stored = getScope();
   if (stored) {
-    return {
-      scopeType: stored.scope_type,
-      scopeId: stored.scope_id,
-      familyId: stored.scope_type === "family" ? stored.scope_id : undefined,
-    };
+    return stored;
   }
 
   // Fetch list of scopes
-  const scopes: Scope[] = await apiFetch("/api/scopes");
+  const scopes = await apiFetch<ScopeRef[]>("/api/scopes");
   if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
-    const scopeType = first.type;
-    const scopeId = String(first.id);
-    setScope(scopeType, scopeId);
-    return {
-      scopeType,
-      scopeId,
-      familyId: scopeType === "family" ? scopeId : undefined,
-    };
+    const scope: ScopeRef = { kind: first.kind as ScopeRef["kind"], id: String(first.id) };
+    setScope(scope);
+    return scope;
   }
 
-  // Fallback to legacy family endpoint
-  const data = await apiFetch("/api/me/default-family");
-  const scopeType = "family";
-  const scopeId = String(data.family_id);
-  setScope(scopeType, scopeId);
-  return {
-    scopeType,
-    scopeId,
-    familyId: scopeId,
-  };
+  // Fallback to legacy default‑family endpoint
+  const data = await apiFetch<{ family_id: string }>("/api/me/default-family");
+  const scope: ScopeRef = { kind: "family", id: String(data.family_id) };
+  setScope(scope);
+  return scope;
 };
