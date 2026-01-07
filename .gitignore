@@ -23,3 +23,4 @@ dist/
 *.db
 !/.env.example
 !frontend/.env.example
+git_status.txt
