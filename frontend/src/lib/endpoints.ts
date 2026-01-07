@@ -16,7 +16,7 @@ export const listGoals = async (scope: ScopeRef): Promise<GoalWithProjection[]> 
 };
 
 export const listScopes = async (): Promise<Scope[]> => {
-  return apiFetch("/api/scopes");
+  return apiFetch("/api/me/scopes");
 };
 
 /* Removed local familyPath helper – use the one from scope.ts */
