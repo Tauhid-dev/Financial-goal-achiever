@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { clearToken } from '../lib/auth';
+import { clearToken, getToken } from '../lib/auth';
+import { ScopeSwitcher } from '../components/ScopeSwitcher';
 
 const AppShell: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const AppShell: React.FC = () => {
         <button onClick={handleLogout} style={{ marginLeft: '2rem' }}>
           Logout
         </button>
+        {getToken() && <ScopeSwitcher />}
       </nav>
       <Outlet />
     </div>

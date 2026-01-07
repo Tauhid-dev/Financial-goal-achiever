@@ -30,3 +30,17 @@ export function familyPath(suffix: string, scope: ScopeRef): string {
   const clean = suffix.startsWith("/") ? suffix.slice(1) : suffix;
   return `/api/${clean}/${scope.id}`;
 }
+
+/**
+ * Enforce that the current scope is a family scope.
+ * Throws an error if no scope is selected or if the scope kind is not "family".
+ */
+export function requireFamilyScope(scope: ScopeRef | null): { familyId: string } {
+  if (!scope) {
+    throw new Error("No scope selected");
+  }
+  if (scope.kind !== "family") {
+    throw new Error("This MVP supports family scopes only");
+  }
+  return { familyId: scope.id };
+}

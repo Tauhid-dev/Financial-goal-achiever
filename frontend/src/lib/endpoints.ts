@@ -4,6 +4,7 @@ import {
   GoalWithProjection,
   MonthlySummary,
   Document,
+  Scope,
 } from "./types";
 import { ScopeRef, familyPath } from "./scope";
 

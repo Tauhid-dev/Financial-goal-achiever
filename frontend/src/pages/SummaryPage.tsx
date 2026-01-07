@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listSummaries } from '../lib/endpoints';
 import { ScopeRef } from '../lib/scope';
+import { requireFamilyScope } from '../lib/scope';
 
 export const SummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,12 @@ export const SummaryPage: React.FC = () => {
   }, []);
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (error) return (
+  <div style={{ color: 'red' }}>
+    {error}
+    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
+  </div>
+);
 
   return (
     <div>

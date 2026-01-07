@@ -4,6 +4,13 @@
 ✅ Scope abstraction introduced, FE session updated, verification passed
 
 ## Completed
+- Project directory structure created
+- Core app skeleton initialized
+- Runtime safety stub added
+- Central config stub added
+- Scope abstraction introduced
+- Frontend session updated
+- Verification passed
 - Added `/api/scopes/default` endpoint
 - Added `ScopeSchema` to backend schemas
 - Registered the new router in `backend/app/api/__init__.py`

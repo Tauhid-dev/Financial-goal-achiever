@@ -13,7 +13,7 @@ export const getScope = (): ScopeRef | null => {
 export const setScope = (scope: ScopeRef): void => {
   localStorage.setItem(SCOPE_KIND_KEY, scope.kind);
   localStorage.setItem(SCOPE_ID_KEY, scope.id);
-};
+}
 
 /**
  * Initialise session – verifies auth token and resolves the default scope.
@@ -30,7 +30,7 @@ export const ensureSession = async (): Promise<ScopeRef> => {
   }
 
   // Fetch list of scopes
-  const scopes = await apiFetch<ScopeRef[]>("/api/scopes");
+  const scopes = await apiFetch("/api/scopes");
   if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
     const scope: ScopeRef = { kind: first.kind as ScopeRef["kind"], id: String(first.id) };
@@ -39,7 +39,7 @@ export const ensureSession = async (): Promise<ScopeRef> => {
   }
 
   // Fallback to legacy default‑family endpoint
-  const data = await apiFetch<{ family_id: string }>("/api/me/default-family");
+  const data = await apiFetch("/api/me/default-family");
   const scope: ScopeRef = { kind: "family", id: String(data.family_id) };
   setScope(scope);
   return scope;

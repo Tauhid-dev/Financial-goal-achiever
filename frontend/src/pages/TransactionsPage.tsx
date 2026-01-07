@@ -3,6 +3,7 @@ import { ensureSession } from '../lib/session';
 import { listTransactions } from '../lib/endpoints';
 import { Transaction } from '../lib/types';
 import { ScopeRef } from '../lib/scope';
+import { requireFamilyScope } from '../lib/scope';
 
 export const TransactionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -12,14 +13,16 @@ export const TransactionsPage: React.FC = () => {
   const limit = 20;
   const [monthFilter, setMonthFilter] = useState<string>('');
 
-  const fetchTxns = async (scope: ScopeRef) => {
-    const params: any = { limit, offset };
-    if (monthFilter) {
-      params.month = monthFilter;
-    }
-    const data = await listTransactions(scope, params);
-    setTransactions(data);
-  };
+const fetchTxns = async (scope: ScopeRef) => {
+  // Ensure the scope is a family scope before proceeding
+  requireFamilyScope(scope);
+  const params: any = { limit, offset };
+  if (monthFilter) {
+    params.month = monthFilter;
+  }
+  const data = await listTransactions(scope, params);
+  setTransactions(data);
+};
 
   const nextPage = () => setOffset(prev => prev + limit);
   const prevPage = () => setOffset(prev => Math.max(prev - limit, 0));
@@ -39,7 +42,12 @@ export const TransactionsPage: React.FC = () => {
   }, [offset, monthFilter]);
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (error) return (
+  <div style={{ color: 'red' }}>
+    {error}
+    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
+  </div>
+);
 
   return (
     <div>

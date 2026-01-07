@@ -3,6 +3,7 @@ import { ensureSession } from '../lib/session';
 import { listDocuments, uploadDocument } from '../lib/endpoints';
 import { Document } from '../lib/types';
 import { ScopeRef } from '../lib/scope';
+import { requireFamilyScope } from '../lib/scope';
 
 export const DocumentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -11,6 +12,8 @@ export const DocumentsPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
 
   const fetchDocs = async (scope: ScopeRef) => {
+    // Ensure the scope is a family scope before proceeding
+    requireFamilyScope(scope);
     const docs = await listDocuments(scope);
     setDocuments(docs);
   };
@@ -19,6 +22,8 @@ export const DocumentsPage: React.FC = () => {
     if (!file) return;
     try {
       const scope = await ensureSession();
+      // Ensure the scope is a family scope before proceeding
+      requireFamilyScope(scope);
       await uploadDocument(scope, file);
       await fetchDocs(scope);
       setFile(null);
@@ -42,7 +47,12 @@ export const DocumentsPage: React.FC = () => {
   }, []);
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (error) return (
+  <div style={{ color: 'red' }}>
+    {error}
+    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
+  </div>
+);
 
   return (
     <div>
