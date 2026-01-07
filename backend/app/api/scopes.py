@@ -1,20 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.auth.deps import get_current_user
-from backend.app.db.session import get_async_session
-from backend.app.db.models import User
-from backend.app.db.repositories.membership_repo import get_default_family_id_for_user, list_user_families
-from backend.app.modules.models.schemas import ScopeSchema
+from fastapi import APIRouter, Depends
+from typing import List
+from backend.app.auth.deps import get_current_user, get_async_session
+from backend.app.auth.schemas import ScopeItemSchema
+from backend.app.db.models.membership import Membership
+from backend.app.db.models.family import Family
+from sqlalchemy import select
 
-router = APIRouter(prefix="/api/scopes", tags=["Scopes"])
+router = APIRouter(prefix="/api/me", tags=["Scopes"])
 
-@router.get("/scopes", response_model=list[ScopeSchema])
-async def list_scopes(
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(get_current_user),
+@router.get("/scopes", response_model=List[ScopeItemSchema])
+async def get_scopes(
+    session=Depends(get_async_session),
+    current_user=Depends(get_current_user)
 ):
-    families = await list_user_families(session, current_user.id)
-    return [
-        ScopeSchema(id=family_id, type="family", name=family_name)
-        for family_id, family_name in families
-    ]
+    """
+    Return all scopes (currently families) the authenticated user belongs to.
+    """
+    stmt = (
+        select(Membership, Family)
+        .join(Family, Membership.family_id == Family.id)
+        .where(Membership.user_id == current_user.id)
+        .order_by(Membership.created_at.asc())
+    )
+    result = await session.execute(stmt)
+    scopes: List[ScopeItemSchema] = []
+    for membership, family in result.all():
+        scopes.append(
+            ScopeItemSchema(
+                type="family",
+                id=str(family.id),
+                name=family.name or "Family"
+            )
+        )
+    return scopes
