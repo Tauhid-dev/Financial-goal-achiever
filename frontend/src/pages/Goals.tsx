@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
-import { getScope, setScope } from '../lib/session';
 import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
 import { GoalWithProjection, GoalCreate } from '../lib/types';
 import { ScopeRef } from '../lib/scope';
-import { requireFamilyScope } from '../lib/scope';
 
 export const Goals: React.FC = () => {
+  // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [goals, setGoals] = useState<GoalWithProjection[]>([]);
@@ -17,17 +16,56 @@ export const Goals: React.FC = () => {
     monthly_contribution: undefined,
     target_date: null,
   });
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Fetch goals for the active family scope
   const fetchGoals = async (scope: ScopeRef) => {
-    const data = await listGoals(scope);
-    setGoals(data);
+    try {
+      const data = await listGoals(scope);
+      setGoals(data);
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load goals');
+    }
   };
 
+  // Form validation
+  const validateGoal = (goal: GoalCreate): { [key: string]: string } => {
+    const errors: { [key: string]: string } = {};
+    if (!goal.name || goal.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
+    if (goal.target_amount <= 0) {
+      errors.target_amount = 'Target amount must be greater than 0';
+    }
+    if (goal.current_amount !== undefined && goal.current_amount < 0) {
+      errors.current_amount = 'Current amount cannot be negative';
+    }
+    if (goal.monthly_contribution !== undefined && goal.monthly_contribution < 0) {
+      errors.monthly_contribution = 'Monthly contribution cannot be negative';
+    }
+    if (goal.target_date) {
+      const ts = Date.parse(goal.target_date);
+      if (isNaN(ts)) {
+        errors.target_date = 'Invalid date';
+      }
+    }
+    return errors;
+  };
+
+  // Create goal handler
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = validateGoal(newGoal);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors({});
+    setCreating(true);
     try {
-  const scope = await ensureSession();
-      // No additional fid check needed – scope already validated
+      const scope = await ensureSession();
       await createGoal(scope, newGoal);
       await fetchGoals(scope);
       setNewGoal({
@@ -38,28 +76,36 @@ export const Goals: React.FC = () => {
         target_date: null,
       });
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message ?? 'Failed to create goal');
+    } finally {
+      setCreating(false);
     }
   };
 
+  // Delete goal handler with confirmation
   const deleteGoalHandler = async (goalId: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this goal?');
+    if (!confirmed) return;
+    setDeletingId(goalId);
     try {
       const scope = await ensureSession();
-      // No additional fid check needed – scope already validated
       await deleteGoal(scope, goalId);
       await fetchGoals(scope);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message ?? 'Failed to delete goal');
+    } finally {
+      setDeletingId(null);
     }
   };
 
+  // Initial load
   useEffect(() => {
     const init = async () => {
       try {
         const scope = await ensureSession();
         await fetchGoals(scope);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message ?? 'Failed to initialise session');
       } finally {
         setLoading(false);
       }
@@ -67,36 +113,64 @@ export const Goals: React.FC = () => {
     init();
   }, []);
 
+  // Render helpers
+  const renderProjection = (proj: any) => {
+    if (!proj) return <span>Projection unavailable</span>;
+    const years = (proj.months_required / 12).toFixed(1);
+    const badgeStyle = {
+      color: proj.is_achievable ? 'green' : 'red',
+      fontWeight: 'bold' as const,
+    };
+    return (
+      <span>
+        {' '}| Months: {proj.months_required}
+        {' '}| Years: {years}
+        {' '}|{' '}
+        <span style={badgeStyle}>
+          {proj.is_achievable ? 'Achievable' : 'Needs adjustment'}
+        </span>
+      </span>
+    );
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return (
-  <div style={{ color: 'red' }}>
-    {error}
-    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
-  </div>
-);
+    <div style={{ color: 'red' }}>
+      {error}
+      <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
+    </div>
+  );
 
   return (
     <div>
       <h2>Goals</h2>
 
+      {/* Goal creation form */}
       <form onSubmit={handleCreate} style={{ marginBottom: '1rem' }}>
         <input
           type="text"
           placeholder="Name"
+          aria-label="Goal name"
           value={newGoal.name}
           onChange={e => setNewGoal({ ...newGoal, name: e.target.value })}
           required
         />
+        {validationErrors.name && <div style={{ color: 'red' }}>{validationErrors.name}</div>}
+
         <input
           type="number"
           placeholder="Target Amount"
+          aria-label="Target amount"
           value={newGoal.target_amount}
           onChange={e => setNewGoal({ ...newGoal, target_amount: Number(e.target.value) })}
           required
         />
+        {validationErrors.target_amount && <div style={{ color: 'red' }}>{validationErrors.target_amount}</div>}
+
         <input
           type="number"
           placeholder="Current Amount"
+          aria-label="Current amount"
           value={newGoal.current_amount ?? ''}
           onChange={e =>
             setNewGoal({
@@ -105,9 +179,12 @@ export const Goals: React.FC = () => {
             })
           }
         />
+        {validationErrors.current_amount && <div style={{ color: 'red' }}>{validationErrors.current_amount}</div>}
+
         <input
           type="number"
           placeholder="Monthly Contribution"
+          aria-label="Monthly contribution"
           value={newGoal.monthly_contribution ?? ''}
           onChange={e =>
             setNewGoal({
@@ -116,31 +193,42 @@ export const Goals: React.FC = () => {
             })
           }
         />
+        {validationErrors.monthly_contribution && <div style={{ color: 'red' }}>{validationErrors.monthly_contribution}</div>}
+
         <input
           type="date"
           placeholder="Target Date"
+          aria-label="Target date"
           value={newGoal.target_date ?? ''}
           onChange={e => setNewGoal({ ...newGoal, target_date: e.target.value || null })}
         />
-        <button type="submit">Create Goal</button>
+        {validationErrors.target_date && <div style={{ color: 'red' }}>{validationErrors.target_date}</div>}
+
+        <button type="submit" disabled={creating}>
+          {creating ? 'Creating…' : 'Create Goal'}
+        </button>
       </form>
 
-      <ul>
-        {goals.map(goal => (
-          <li key={goal.id}>
-            <strong>{goal.name}</strong> – Target: {goal.target_amount}
-            {goal.projection && (
-              <span>
-                {' '}| Months Required: {goal.projection.months_required}
-                {' '}| Achievable: {goal.projection.is_achievable ? 'Yes' : 'No'}
-              </span>
-            )}
-            <button onClick={() => deleteGoalHandler(goal.id)} style={{ marginLeft: '1rem' }}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+      {/* Goals list */}
+      {goals.length === 0 ? (
+        <div>No goals yet. Create one above.</div>
+      ) : (
+        <ul>
+          {goals.map(goal => (
+            <li key={goal.id} style={{ marginBottom: '0.5rem' }}>
+              <strong>{goal.name}</strong> – Target: {goal.target_amount}
+              {goal.projection && renderProjection(goal.projection)}
+              <button
+                onClick={() => deleteGoalHandler(goal.id)}
+                style={{ marginLeft: '1rem' }}
+                disabled={deletingId === goal.id}
+              >
+                {deletingId === goal.id ? 'Deleting…' : 'Delete'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
