@@ -1,25 +1,28 @@
-declare const global: any;
-declare const vi: any;
-declare const it: any;
-declare const expect: any;
-
+import { describe, it, expect, vi } from 'vitest';
 import { apiFetch, isUnauthorized } from '../api';
 
+const mockLocalStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+(globalThis as any).localStorage = mockLocalStorage;
+
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 it('apiFetch throws ApiError with UNAUTHORIZED code on 401', async () => {
   // @ts-ignore
-  global.fetch.mockResolvedValueOnce({
+  globalThis.fetch.mockResolvedValueOnce({
     ok: false,
     status: 401,
     text: async () => '',
   });
 
-  await expect(apiFetch('/test')).rejects.toMatchObject({
-    code: 'UNAUTHORIZED',
-    status: 401,
-  });
+await expect(apiFetch('/test')).rejects.toMatchObject({
+  code: 'UNAUTHORIZED',
+  status: 401,
+});
 });
 
 it('isUnauthorized correctly identifies UNAUTHORIZED errors', () => {
