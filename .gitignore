@@ -6,8 +6,7 @@ venv/
 env/
 .env
 .env.*
-*.env
-.pytest_cache/
+*.pytest_cache/
 .coverage
 htmlcov/
 coverage.xml
@@ -24,3 +23,7 @@ dist/
 !/.env.example
 !frontend/.env.example
 git_status.txt
+Resources/
+**/Resources/
+*.pyc
+__pycache__/

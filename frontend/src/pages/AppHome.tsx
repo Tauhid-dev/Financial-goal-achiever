@@ -12,7 +12,7 @@ export default function AppHome() {
   useEffect(() => {
     const fetchFamily = async () => {
       try {
-        const data = await apiFetch("/api/families/default");
+        const data = await apiFetch("/api/me/default-family");
         if (data && data.id) {
           setFamilyId(String(data.id));
         } else {

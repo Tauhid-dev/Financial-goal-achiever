@@ -25,7 +25,7 @@ export const ensureSession = async (): Promise<ScopeRef> => {
   }
 
   // Fetch list of scopes
-  const scopes = await apiFetch("/api/me/scopes");
+  const scopes = await apiFetch("/api/scopes");
   if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
     const scope: ScopeRef = { id: String(first.id) };
