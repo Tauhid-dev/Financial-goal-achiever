@@ -58,10 +58,11 @@ export interface TokenResponse {
   token_type: string;
 }
 
+export type ScopeKind = "family" | "individual" | "business";
+
 export interface Scope {
+  kind: ScopeKind;
   id: string;
-  type: string;
-  name?: string | null;
 }
 
 export interface ScopeItem {

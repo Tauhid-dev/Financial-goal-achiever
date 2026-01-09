@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
 import { GoalWithProjection, GoalCreate } from '../lib/types';
-import { ScopeRef } from '../lib/scope';
+import { Scope } from '../lib/types';
 
 export const Goals: React.FC = () => {
   // UI state
@@ -21,7 +21,7 @@ export const Goals: React.FC = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Fetch goals for the active family scope
-  const fetchGoals = async (scope: ScopeRef) => {
+  const fetchGoals = async (scope: Scope) => {
     try {
       const data = await listGoals(scope);
       setGoals(data);

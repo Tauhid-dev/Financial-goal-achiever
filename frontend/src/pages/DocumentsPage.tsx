@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listDocuments, uploadDocument } from '../lib/endpoints';
 import { Document } from '../lib/types';
-import { ScopeRef } from '../lib/scope';
-import { requireFamilyScope } from '../lib/scope';
+import { Scope } from '../lib/types';
 
 export const DocumentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -11,9 +10,7 @@ export const DocumentsPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [file, setFile] = useState<File | null>(null);
 
-  const fetchDocs = async (scope: ScopeRef) => {
-    // Ensure the scope is a family scope before proceeding
-    requireFamilyScope(scope);
+  const fetchDocs = async (scope: Scope) => {
     const docs = await listDocuments(scope);
     setDocuments(docs);
   };
@@ -22,8 +19,6 @@ export const DocumentsPage: React.FC = () => {
     if (!file) return;
     try {
       const scope = await ensureSession();
-      // Ensure the scope is a family scope before proceeding
-      requireFamilyScope(scope);
       await uploadDocument(scope, file);
       await fetchDocs(scope);
       setFile(null);

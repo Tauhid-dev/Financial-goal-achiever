@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listSummaries } from '../lib/endpoints';
-import { ScopeRef } from '../lib/scope';
-import { requireFamilyScope } from '../lib/scope';
+import { Scope } from '../lib/types';
 
 export const SummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);

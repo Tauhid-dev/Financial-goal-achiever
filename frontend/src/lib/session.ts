@@ -1,22 +1,22 @@
 import { apiFetch, meAPI } from "./api";
-import { ScopeRef } from "./scope";
+import { Scope } from "./types";
 
-export const getScope = (): ScopeRef | null => {
+export const getScope = (): Scope | null => {
   const id = localStorage.getItem("active_scope_id");
-  const kind = localStorage.getItem("active_scope_kind") ?? "family";
+  const kind = (localStorage.getItem("active_scope_kind") as Scope["kind"]) ?? "family";
   return id ? { id, kind } : null;
 };
 
-export const setScope = (scope: ScopeRef): void => {
+export const setScope = (scope: Scope): void => {
   localStorage.setItem("active_scope_id", scope.id);
   localStorage.setItem("active_scope_kind", scope.kind);
 };
 
 /**
  * Initialise session – verifies auth token and resolves the default scope.
- * Returns a ScopeRef (family MVP now).
+ * Returns a Scope (family MVP now).
  */
-export const ensureSession = async (): Promise<ScopeRef> => {
+export const ensureSession = async (): Promise<Scope> => {
   // Verify token via /api/auth/me (throws on 401)
   await meAPI();
 
@@ -30,9 +30,9 @@ export const ensureSession = async (): Promise<ScopeRef> => {
   const scopes = await apiFetch("/api/scopes");
 if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
-    const scope: ScopeRef = {
+    const scope: Scope = {
       id: String(first.id),
-      kind: String(first.kind ?? "family")
+      kind: (first.kind as Scope["kind"]) ?? "family"
     };
     setScope(scope);
     return scope;
@@ -40,7 +40,7 @@ if (Array.isArray(scopes) && scopes.length > 0) {
 
   // Fallback to legacy default‑family endpoint
 const data = await apiFetch("/api/me/default-family");
-const scope: ScopeRef = {
+const scope: Scope = {
   id: String(data.family_id),
   kind: "family"
 };

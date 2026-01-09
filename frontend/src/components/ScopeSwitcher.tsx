@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { listScopes } from "../lib/endpoints";
 import { getScope, setScope } from "../lib/session";
-import { Scope } from "../lib/types";
-import { ScopeRef } from "../lib/scope";
+import { Scope, ScopeItem } from "../lib/types";
 
 /**
  * UI component to select the active scope.
@@ -10,7 +9,7 @@ import { ScopeRef } from "../lib/scope";
  * and triggers a page reload on change (simple MVP behavior).
  */
 export const ScopeSwitcher: React.FC = () => {
-  const [scopes, setScopes] = useState<Scope[]>([]);
+  const [scopes, setScopes] = useState<ScopeItem[]>([]);
   const [selected, setSelected] = useState<string>("");
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export const ScopeSwitcher: React.FC = () => {
         setSelected(JSON.stringify(stored));
       } else if (fetched.length > 0) {
         const first = fetched[0];
-        const ref: ScopeRef = { kind: first.type as ScopeRef["kind"], id: first.id };
+        const ref: Scope = { kind: first.kind, id: first.id };
         setScope(ref);
         setSelected(JSON.stringify(ref));
       }
@@ -32,7 +31,7 @@ export const ScopeSwitcher: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setSelected(value);
-    const parsed: ScopeRef = JSON.parse(value);
+    const parsed: Scope = JSON.parse(value);
     setScope(parsed);
     // Simple reload to refresh data
     window.location.reload();
@@ -45,8 +44,8 @@ export const ScopeSwitcher: React.FC = () => {
   return (
     <select value={selected} onChange={handleChange} style={{ marginLeft: "1rem" }}>
       {scopes.map((s) => {
-        const label = s.name ?? `${s.type}:${s.id.slice(0, 8)}`;
-        const value = JSON.stringify({ kind: s.type as ScopeRef["kind"], id: s.id });
+        const label = s.label ?? `${s.kind}:${s.id.slice(0, 8)}`;
+        const value = JSON.stringify({ kind: s.kind, id: s.id });
         return (
           <option key={s.id} value={value}>
             {label}

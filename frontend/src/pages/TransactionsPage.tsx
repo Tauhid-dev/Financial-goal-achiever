@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listTransactions } from '../lib/endpoints';
-import { Transaction } from '../lib/types';
-import { ScopeRef } from '../lib/scope';
-import { requireFamilyScope } from '../lib/scope';
+import { Transaction, Scope } from '../lib/types';
 
 export const TransactionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -13,9 +11,7 @@ export const TransactionsPage: React.FC = () => {
   const limit = 20;
   const [monthFilter, setMonthFilter] = useState<string>('');
 
-const fetchTxns = async (scope: ScopeRef) => {
-  // Ensure the scope is a family scope before proceeding
-  requireFamilyScope(scope);
+const fetchTxns = async (scope: Scope) => {
   const params: any = { limit, offset };
   if (monthFilter) {
     params.month = monthFilter;
