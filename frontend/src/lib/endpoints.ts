@@ -9,7 +9,7 @@ import {
 } from "./types";
 import { familyPath } from "./scope";
 
-export const SCOPES_LIST = "/scopes";
+export const SCOPES_LIST = "/api/scopes";
 
 /**
  * Goals endpoints
@@ -20,6 +20,10 @@ export const listGoals = async (scope: Scope): Promise<GoalWithProjection[]> => 
 
 export const listScopes = async (): Promise<Scope[]> => {
   return apiFetch(SCOPES_LIST);
+};
+
+export const getDefaultScope = async (): Promise<Scope> => {
+  return apiFetch("/api/scopes/default");
 };
 
 /* Removed local familyPath helper – use the one from scope.ts */

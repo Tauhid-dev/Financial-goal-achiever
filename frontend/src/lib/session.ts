@@ -5,7 +5,7 @@ export const getScope = (): Scope | null => {
   const id = localStorage.getItem("active_scope_id");
   const kind = (localStorage.getItem("active_scope_kind") as Scope["kind"]) ?? "family";
   return id ? { id, kind } : null;
-};
+}
 
 export const setScope = (scope: Scope): void => {
   localStorage.setItem("active_scope_id", scope.id);
