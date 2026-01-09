@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 1. Backend health check
-echo "Checking backend health..."
-if ! curl -sSf http://localhost:8000/health; then
-  echo "Backend health check failed"
-  exit 1
+# Detect CI environment
+if [ "${CI:-false}" = "true" ]; then
+  echo "Running in CI mode – skipping health check and venv activation"
+else
+  # 1. Backend health check
+  echo "Checking backend health..."
+  if ! curl -sSf http://localhost:8000/health; then
+    echo "Backend health check failed"
+    exit 1
+  fi
 fi
 
 # 2. Frontend build
 npm -C frontend run build
 
 # 3. Backend tests
-source ./myenv/bin/activate && python -m pytest -q
+if [ "${CI:-false}" = "true" ]; then
+  python -m pytest -q
+else
+  source ./myenv/bin/activate && python -m pytest -q
+fi
 
 # 4. Frontend tests
 npm -C frontend test --silent
