@@ -3,6 +3,8 @@ import { ensureSession } from '../lib/session';
 import { listDocuments, uploadDocument } from '../lib/endpoints';
 import { Document } from '../lib/types';
 import { Scope } from '../lib/types';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
 
 export const DocumentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -10,9 +12,12 @@ export const DocumentsPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [currentScope, setCurrentScope] = useState<Scope | null>(null);
 
-  const fetchDocs = async (scope: Scope) => {
-    const docs = await listDocuments(scope);
+  const fetchDocs = async (scope?: Scope) => {
+    const effectiveScope = scope ?? (await ensureSession());
+    setCurrentScope(effectiveScope);
+    const docs = await listDocuments(effectiveScope);
     setDocuments(docs);
   };
 
@@ -51,13 +56,8 @@ export const DocumentsPage: React.FC = () => {
     init();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return (
-  <div style={{ color: 'red' }}>
-    {error}
-    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
-  </div>
-);
+  if (loading) return <Spinner label="Loading documents…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => fetchDocs()} />;
 
   return (
     <div>

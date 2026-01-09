@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
 import { GoalWithProjection, GoalCreate } from '../lib/types';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
 import { Scope } from '../lib/types';
 
 export const Goals: React.FC = () => {
@@ -19,11 +21,14 @@ export const Goals: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentScope, setCurrentScope] = useState<Scope | null>(null);
 
   // Fetch goals for the active family scope
-  const fetchGoals = async (scope: Scope) => {
+  const fetchGoals = async (scope?: Scope) => {
     try {
-      const data = await listGoals(scope);
+      const effectiveScope = scope ?? (await ensureSession());
+      setCurrentScope(effectiveScope);
+      const data = await listGoals(effectiveScope);
       setGoals(data);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load goals');
@@ -133,13 +138,8 @@ export const Goals: React.FC = () => {
     );
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return (
-    <div style={{ color: 'red' }}>
-      {error}
-      <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
-    </div>
-  );
+  if (loading) return <Spinner label="Loading goals…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => fetchGoals()} />;
 
   return (
     <div>

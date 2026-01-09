@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listSummaries } from '../lib/endpoints';
-import { Scope } from '../lib/types';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
 
 export const SummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -23,13 +24,21 @@ export const SummaryPage: React.FC = () => {
     fetchData();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return (
-  <div style={{ color: 'red' }}>
-    {error}
-    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
-  </div>
-);
+  if (loading) return <Spinner label="Loading summary…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => {
+    // retry fetching summary
+    const retry = async () => {
+      try {
+        const scope = await ensureSession();
+        const data = await listSummaries(scope);
+        setSummaries(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+    retry();
+  }} />;
 
   return (
     <div>

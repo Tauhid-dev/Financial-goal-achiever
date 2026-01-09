@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listTransactions } from '../lib/endpoints';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
 import { Transaction, Scope } from '../lib/types';
 
 export const TransactionsPage: React.FC = () => {
@@ -10,13 +12,16 @@ export const TransactionsPage: React.FC = () => {
   const [offset, setOffset] = useState(0);
   const limit = 20;
   const [monthFilter, setMonthFilter] = useState<string>('');
+  const [currentScope, setCurrentScope] = useState<Scope | null>(null);
 
-const fetchTxns = async (scope: Scope) => {
+const fetchTxns = async (scope?: Scope) => {
+  const effectiveScope = scope ?? (await ensureSession());
+  setCurrentScope(effectiveScope);
   const params: any = { limit, offset };
   if (monthFilter) {
     params.month = monthFilter;
   }
-  const data = await listTransactions(scope, params);
+  const data = await listTransactions(effectiveScope, params);
   setTransactions(data);
 };
 
@@ -37,13 +42,8 @@ const fetchTxns = async (scope: Scope) => {
     init();
   }, [offset, monthFilter]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return (
-  <div style={{ color: 'red' }}>
-    {error}
-    <button onClick={() => window.location.reload()} style={{ marginLeft: '1rem' }}>Reload</button>
-  </div>
-);
+  if (loading) return <Spinner label="Loading transactions…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => fetchTxns()} />;
 
   return (
     <div>
