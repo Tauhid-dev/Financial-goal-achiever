@@ -3,11 +3,13 @@ import { ScopeRef } from "./scope";
 
 export const getScope = (): ScopeRef | null => {
   const id = localStorage.getItem("active_scope_id");
-  return id ? { id } : null;
+  const kind = localStorage.getItem("active_scope_kind") ?? "family";
+  return id ? { id, kind } : null;
 };
 
 export const setScope = (scope: ScopeRef): void => {
   localStorage.setItem("active_scope_id", scope.id);
+  localStorage.setItem("active_scope_kind", scope.kind);
 };
 
 /**
@@ -26,16 +28,22 @@ export const ensureSession = async (): Promise<ScopeRef> => {
 
   // Fetch list of scopes
   const scopes = await apiFetch("/api/scopes");
-  if (Array.isArray(scopes) && scopes.length > 0) {
+if (Array.isArray(scopes) && scopes.length > 0) {
     const first = scopes[0];
-    const scope: ScopeRef = { id: String(first.id) };
+    const scope: ScopeRef = {
+      id: String(first.id),
+      kind: String(first.kind ?? "family")
+    };
     setScope(scope);
     return scope;
-  }
+}
 
   // Fallback to legacy default‑family endpoint
-  const data = await apiFetch("/api/me/default-family");
-  const scope: ScopeRef = { id: String(data.family_id) };
-  setScope(scope);
-  return scope;
+const data = await apiFetch("/api/me/default-family");
+const scope: ScopeRef = {
+  id: String(data.family_id),
+  kind: "family"
+};
+setScope(scope);
+return scope;
 };
