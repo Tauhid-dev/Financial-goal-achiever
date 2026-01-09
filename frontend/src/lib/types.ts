@@ -63,3 +63,9 @@ export interface Scope {
   type: string;
   name?: string | null;
 }
+
+export interface ScopeItem {
+  id: string;
+  label: string;
+  kind: "family" | "individual" | "business" | string;
+}

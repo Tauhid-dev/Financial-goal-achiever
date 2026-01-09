@@ -8,6 +8,8 @@ import {
 } from "./types";
 import { ScopeRef, familyPath } from "./scope";
 
+export const SCOPES_LIST = "/scopes";
+
 /**
  * Goals endpoints
  */
@@ -16,7 +18,7 @@ export const listGoals = async (scope: ScopeRef): Promise<GoalWithProjection[]> 
 };
 
 export const listScopes = async (): Promise<Scope[]> => {
-  return apiFetch("/api/me/scopes");
+  return apiFetch(SCOPES_LIST);
 };
 
 /* Removed local familyPath helper – use the one from scope.ts */

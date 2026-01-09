@@ -9,7 +9,7 @@ from backend.app.db.models.membership import Membership
 from backend.app.db.models.family import Family
 from sqlalchemy import select
 
-router = APIRouter(prefix="/api/me", tags=["Scopes"])
+router = APIRouter(prefix="/api", tags=["Scopes"])
 
 @router.get("/scopes", response_model=List[ScopeItemSchema])
 async def get_scopes(
