@@ -1,7 +1,9 @@
 declare const global: any;
+declare const vi: any;
+declare const it: any;
+declare const expect: any;
 
 import { apiFetch, isUnauthorized } from '../api';
-import { vi, it, expect } from 'vitest';
 
 // Mock fetch globally
 global.fetch = vi.fn();
