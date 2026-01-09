@@ -9,6 +9,7 @@ export const DocumentsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchDocs = async (scope: Scope) => {
     const docs = await listDocuments(scope);
@@ -17,13 +18,22 @@ export const DocumentsPage: React.FC = () => {
 
   const handleUpload = async () => {
     if (!file) return;
+    // Client‑side PDF validation
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Only PDF files are allowed');
+      return;
+    }
+    setUploading(true);
     try {
       const scope = await ensureSession();
       await uploadDocument(scope, file);
       await fetchDocs(scope);
       setFile(null);
     } catch (err: any) {
-      setError(err.message);
+      // Preserve existing error message; could be auth, validation, or generic
+      setError(err.message ?? 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -65,8 +75,8 @@ export const DocumentsPage: React.FC = () => {
           accept="application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
-        <button onClick={handleUpload} disabled={!file}>
-          Upload PDF
+        <button onClick={handleUpload} disabled={!file || uploading}>
+          {uploading ? 'Uploading…' : 'Upload PDF'}
         </button>
       </div>
     </div>

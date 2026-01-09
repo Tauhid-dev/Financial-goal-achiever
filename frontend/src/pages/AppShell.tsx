@@ -18,6 +18,7 @@ const AppShell: React.FC = () => {
         <Link to="documents" style={{ marginRight: '1rem' }}>Documents</Link>
         <Link to="transactions" style={{ marginRight: '1rem' }}>Transactions</Link>
         <Link to="goals" style={{ marginRight: '1rem' }}>Goals</Link>
+        <Link to="insights" style={{ marginRight: '1rem' }}>Insights</Link>
         <button onClick={handleLogout} style={{ marginLeft: '2rem' }}>
           Logout
         </button>

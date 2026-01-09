@@ -5,6 +5,7 @@ import {
   MonthlySummary,
   Document,
   Scope,
+  InsightsResponse,
 } from "./types";
 import { familyPath } from "./scope";
 
@@ -77,7 +78,7 @@ export const listTransactions = async (
 /**
  * Placeholder for insights – returns unknown type
  */
-export const getInsights = async (scope: Scope, params?: any): Promise<any> => {
-  const query = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+export const getInsights = async (scope: Scope, month?: string): Promise<InsightsResponse> => {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
   return apiFetch(`${familyPath("insights", scope)}${query}`);
 };

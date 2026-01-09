@@ -70,3 +70,23 @@ export interface ScopeItem {
   label: string;
   kind: "family" | "individual" | "business" | string;
 }
+
+/**
+ * Insights response shape returned by the backend deterministic insights endpoint.
+ * All fields are optional to stay resilient to future changes.
+ */
+export interface InsightsResponse {
+  month?: string;
+  summary?: {
+    income?: number;
+    expenses?: number;
+    savings?: number;
+    savings_rate?: number;
+  };
+  top_expense_categories?: Array<{
+    category: string;
+    amount: number;
+  }>;
+  recommendations?: string[];
+  notes?: string[];
+}
