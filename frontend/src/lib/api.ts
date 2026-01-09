@@ -19,6 +19,19 @@ export function clearToken(): void {
 }
 
 // Generic request helper
+class ApiError extends Error {
+  code?: string;
+  status?: number;
+  details?: any;
+  constructor(message: string, status?: number, code?: string, details?: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 async function request<T = any>(path: string, opts: RequestInit = {}): Promise<T | null> {
   // Determine request body handling and headers
   const isFormData = typeof FormData !== "undefined" && opts.body instanceof FormData;
@@ -76,7 +89,7 @@ async function request<T = any>(path: string, opts: RequestInit = {}): Promise<T
     if (response.status === 401) {
       clearToken();
     }
-    throw normalized;
+    throw new ApiError(normalized.message, normalized.status, normalized.code, normalized);
   }
 
   const text = await response.text();

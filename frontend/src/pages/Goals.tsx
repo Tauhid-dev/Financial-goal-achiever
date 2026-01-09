@@ -1,12 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ensureSession } from '../lib/session';
 import { listGoals, createGoal, deleteGoal } from '../lib/endpoints';
 import { GoalWithProjection, GoalCreate } from '../lib/types';
 import Spinner from '../components/Spinner';
 import ErrorBanner from '../components/ErrorBanner';
 import { Scope } from '../lib/types';
+import { getErrorMessage, isUnauthorized } from '../lib/errors';
+import { clearToken } from '../lib/api';
 
 export const Goals: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleError = (err: unknown) => {
+    if (isUnauthorized(err)) {
+      clearToken();
+      navigate('/login');
+    } else {
+      setError(getErrorMessage(err));
+    }
+  };
+
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +44,8 @@ export const Goals: React.FC = () => {
       setCurrentScope(effectiveScope);
       const data = await listGoals(effectiveScope);
       setGoals(data);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to load goals');
+    } catch (e) {
+      handleError(e);
     }
   };
 
@@ -80,8 +94,8 @@ export const Goals: React.FC = () => {
         monthly_contribution: undefined,
         target_date: null,
       });
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to create goal');
+    } catch (err) {
+      handleError(err);
     } finally {
       setCreating(false);
     }
@@ -96,8 +110,8 @@ export const Goals: React.FC = () => {
       const scope = await ensureSession();
       await deleteGoal(scope, goalId);
       await fetchGoals(scope);
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to delete goal');
+    } catch (err) {
+      handleError(err);
     } finally {
       setDeletingId(null);
     }
@@ -109,8 +123,8 @@ export const Goals: React.FC = () => {
       try {
         const scope = await ensureSession();
         await fetchGoals(scope);
-      } catch (err: any) {
-        setError(err.message ?? 'Failed to initialise session');
+      } catch (err) {
+        handleError(err);
       } finally {
         setLoading(false);
       }

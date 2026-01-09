@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ensureSession } from '../lib/session';
 import { listSummaries } from '../lib/endpoints';
 import Spinner from '../components/Spinner';
 import ErrorBanner from '../components/ErrorBanner';
+import { getErrorMessage, isUnauthorized } from '../lib/errors';
+import { clearToken } from '../lib/api';
 
 export const SummaryPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [summaries, setSummaries] = useState<any[]>([]);
+
+  const handleError = (err: unknown) => {
+    if (isUnauthorized(err)) {
+      clearToken();
+      navigate('/login');
+    } else {
+      setError(getErrorMessage(err));
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,8 +28,8 @@ export const SummaryPage: React.FC = () => {
         const scope = await ensureSession();
         const data = await listSummaries(scope);
         setSummaries(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        handleError(err);
       } finally {
         setLoading(false);
       }
@@ -26,15 +39,14 @@ export const SummaryPage: React.FC = () => {
 
   if (loading) return <Spinner label="Loading summary…" />;
   if (error) return <ErrorBanner error={error} onRetry={() => {
-    // retry fetching summary
     const retry = async () => {
       try {
         const scope = await ensureSession();
         const data = await listSummaries(scope);
         setSummaries(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        handleError(err);
       }
     };
     retry();
