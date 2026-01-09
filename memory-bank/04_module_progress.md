@@ -4,10 +4,10 @@
 🚧 Project initialized
 
 ## Completed
-- Backend directory structure and core skeleton created
-- Runtime safety stub and central config stub added
-- Frontend test setup and Vitest configuration added
-- Frontend insights page and regression tests added
+- Project directory structure created
+- Core app skeleton initialized
+- Runtime safety stub added
+- Central config stub added
 
 ## Current Focus
-- Phase 3: Continue frontend feature development (e.g., PDF ingestion upcoming)
+- Phase 2: PDF Ingestion (next chunk)
