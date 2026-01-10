@@ -50,3 +50,30 @@ The backend will be reachable at `http://localhost:8000` and the frontend at `ht
 To stop and clean up:
 ```bash
 docker compose -f docker-compose.demo.yml down -v
+```
+
+## Demo reset
+If you need a fresh demo environment (e.g., to clear the database), run:
+```bash
+./scripts/demo_reset.sh
+```
+
+## Full end‑to‑end smoke test
+After the containers are up, you can verify the complete flow with the provided smoke script:
+```bash
+./scripts/smoke_demo.sh
+```
+The script will:
+- Build the frontend
+- Run backend and frontend tests
+- Register a demo user, log in, and obtain a JWT
+- Fetch the default family (scope)
+- Create, list, and delete a demo goal
+- Retrieve documents, summary, transactions, and insights
+- Report **E2E smoke demo passed** on success
+
+## Expected URLs
+- Backend API health: `http://localhost:8000/health`
+- Frontend UI: `http://localhost:5173`
+
+You can now start the demo, run the smoke test, and reset when needed.

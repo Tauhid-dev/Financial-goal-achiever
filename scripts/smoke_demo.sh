@@ -80,12 +80,13 @@ if [ "${CI:-false}" != "true" ]; then
   AUTH_HEADER="Authorization: Bearer $ACCESS_TOKEN"
 
   echo "Fetching default family (scope)…"
-  SCOPE_RESP=$(curl -s -H "$AUTH_HEADER" "$BASE_URL/api/me/default-family")
-  FAMILY_ID=$(echo "$SCOPE_RESP" | jq -r .family_id)
-  if [ -z "$FAMILY_ID" ] || [ "$FAMILY_ID" = "null" ]; then
-    echo "Failed to get default family: $SCOPE_RESP"
-    exit 1
-  fi
+# The demo uses the first family returned by the scopes endpoint as the default.
+SCOPE_LIST=$(curl -s -H "$AUTH_HEADER" "$BASE_URL/api/scopes")
+FAMILY_ID=$(echo "$SCOPE_LIST" | jq -r '.[0].id')
+if [ -z "$FAMILY_ID" ] || [ "$FAMILY_ID" = "null" ]; then
+  echo "Failed to get default family from scopes: $SCOPE_LIST"
+  exit 1
+fi
 
   echo "Creating demo goal…"
   GOAL_PAYLOAD='{
