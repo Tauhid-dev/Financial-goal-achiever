@@ -1,0 +1,92 @@
+/**
+ * TypeScript interfaces mirroring backend response shapes.
+ */
+
+export interface GoalCreate {
+  name: string;
+  target_amount: number;
+  current_amount?: number;
+  monthly_contribution?: number;
+  target_date?: string | null;
+}
+
+export interface GoalProjection {
+  months_required: number;
+  years_required: number;
+  is_achievable: boolean;
+}
+
+export interface GoalWithProjection extends GoalCreate {
+  id: string;
+  family_id: string;
+  projection?: GoalProjection | null;
+}
+
+export interface MonthlySummary {
+  id: string;
+  family_id: string;
+  month: string;
+  income: number;
+  expenses: number;
+  savings: number;
+  savings_rate: number;
+}
+
+export interface Document {
+  id: string;
+  family_id: string;
+  filename: string;
+  uploaded_at: string;
+  transactions_inserted?: number | null;
+  months_upserted?: number | null;
+  pipeline_result?: any;
+}
+
+/**
+ * Transaction interface for the Transactions page.
+ */
+export interface Transaction {
+  id: string;
+  family_id: string;
+  date: string;
+  description: string;
+  amount: number;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export type ScopeKind = "family" | "individual" | "business";
+
+export interface Scope {
+  kind: ScopeKind;
+  id: string;
+}
+
+export interface ScopeItem {
+  id: string;
+  label: string;
+  kind: "family" | "individual" | "business" | string;
+}
+
+/**
+ * Insights response shape returned by the backend deterministic insights endpoint.
+ * All fields are optional to stay resilient to future changes.
+ */
+export interface InsightsResponse {
+  month?: string;
+  summary?: {
+    income?: number;
+    expenses?: number;
+    savings?: number;
+    savings_rate?: number;
+  };
+  top_expense_categories?: Array<{
+    category: string;
+    amount: number;
+  }>;
+  recommendations?: string[];
+  notes?: string[];
+}
