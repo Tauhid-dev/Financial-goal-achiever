@@ -10,7 +10,7 @@ WORKDIR /app
 # RUN pip install --no-cache-dir -r requirements.txt
 
 # ---- Copy application code ----
-COPY backend/app /app
+COPY . /app
 
 # ---- Switch to non-root user ----
 USER appuser

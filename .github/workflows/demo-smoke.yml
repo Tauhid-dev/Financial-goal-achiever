@@ -31,6 +31,15 @@ jobs:
       - name: Start demo stack
         run: docker compose -f docker-compose.demo.yml up --build -d
 
+      - name: Show build contexts and Dockerfile snippets
+        run: |
+          echo "=== docker-compose.demo.yml (first 40 lines) ==="
+          sed -n '1,40p' docker-compose.demo.yml
+          echo "=== backend/Dockerfile (first 40 lines) ==="
+          sed -n '1,40p' backend/Dockerfile
+          echo "=== frontend/Dockerfile (first 40 lines) ==="
+          sed -n '1,40p' frontend/Dockerfile
+
       - name: Run smoke demo
         run: ./scripts/smoke_demo.sh
 
