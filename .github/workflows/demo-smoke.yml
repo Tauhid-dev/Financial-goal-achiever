@@ -1,4 +1,5 @@
 name: Demo Smoke Test
+# Final fix applied: backend build context uses repo root, Alembic files copied from alembic/ directory
 
 on:
   push:
