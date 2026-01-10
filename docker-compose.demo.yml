@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fga_demo_db
+    environment:
+      POSTGRES_DB: fga_demo
+      POSTGRES_USER: fga_user
+      POSTGRES_PASSWORD: fga_pass
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "fga_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fga_demo_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fga_user:fga_pass@db:5432/fga_demo
+      JWT_SECRET: demo-secret
+      CORS_ORIGINS: http://localhost:5173
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+    ports:
+      - "8000:8000"
+    command: >
+      /bin/sh -c "
+        alembic upgrade head && 
+        uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fga_demo_frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    command: >
+      /bin/sh -c "
+        npm run build && 
+        npx vite preview --host 0.0.0.0 --port 5173
+      "
+
+volumes:
+  pg_data:

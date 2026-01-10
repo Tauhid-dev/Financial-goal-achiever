@@ -41,43 +41,12 @@
    npm run dev   # serves at http://localhost:5173
    ```
 
-## One‑command demo flow
-Open **two terminals**:
-
-**Terminal 1 – Backend**
+## One‑command demo
 ```bash
-source ./myenv/bin/activate
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+docker compose -f docker-compose.demo.yml up --build
 ```
+The backend will be reachable at `http://localhost:8000` and the frontend at `http://localhost:5173`.
 
-**Terminal 2 – Frontend**
+To stop and clean up:
 ```bash
-cd frontend
-npm run dev
-```
-
-Now run the end‑to‑end smoke script (it will exercise the full API):
-```bash
-./scripts/smoke_demo.sh
-```
-
-### Expected demo steps performed by the script
-1. Health‑check the backend.
-2. Build the frontend (ensures the build succeeds).
-3. Run backend unit tests.
-4. Run frontend unit tests.
-5. Register a random demo user.
-6. Log in and obtain a JWT.
-7. Fetch the default family (scope) for the user.
-8. Create a demo goal.
-9. List goals (the newly created one should appear).
-10. Retrieve insights for the family.
-11. Print **“E2E smoke demo passed”** on success.
-
-## Troubleshooting
-- **CORS errors** – ensure `CORS_ORIGINS` in `backend/.env` includes the frontend URL (`http://localhost:5173` by default).  
-- **Missing JWT_SECRET** – set a strong secret in `backend/.env`.  
-- **Database not reachable** – verify `DATABASE_URL` points to a running PostgreSQL instance or use the Docker Compose file (`docker compose up -d`).  
-- **Port conflicts** – make sure ports 8000 (backend) and 5173 (frontend) are free.  
-
-Happy demoing!
+docker compose -f docker-compose.demo.yml down -v
