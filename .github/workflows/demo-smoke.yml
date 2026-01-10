@@ -44,7 +44,7 @@ jobs:
         run: ./scripts/smoke_demo.sh
 
       - name: Show compose logs on failure
-        if: ${{ failure() }}
+        if: ${{ always() }}
         run: |
           echo "=== docker compose ps ==="
           docker compose -f docker-compose.demo.yml ps
