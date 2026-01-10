@@ -1,18 +1,13 @@
 # Module Progress
 
 ## Status
-✅ Demo flow hardened
+🚧 Demo-smoke CI fixed
 
 ## Completed
-- Project directory structure created
-- Core app skeleton initialized
-- Runtime safety stub added
-- Central config stub added
-- Demo reset script added
-- DEMO.md run‑book polished
-- Smoke demo script hardened with full E2E flow
-- Backend and frontend tests passing
-- Documentation updated with expected URLs
+- Backend Dockerfile updated to copy alembic files with repository‑root build context.
+- `docker-compose.demo.yml` backend service now builds from repo root and runs `python -m uvicorn app.main:app`.
+- CI workflow `.github/workflows/demo-smoke.yml` preflight step added to verify build context and file visibility.
+- All modifications prepared for a single commit.
 
 ## Current Focus
-- Phase 3: Verify full demo flow (next chunk)
+- Phase 2: PDF ingestion (next chunk)
