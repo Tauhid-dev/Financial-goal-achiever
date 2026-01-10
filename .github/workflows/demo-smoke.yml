@@ -31,10 +31,10 @@ jobs:
 
       - name: Preflight checks (ensure build context visibility)
         run: |
-          echo "=== alembic.ini ==="
-          ls -la alembic.ini || true
-          echo "=== alembic directory ==="
-          ls -la alembic || true
+          echo "=== backend/alembic.ini ==="
+          ls -la backend/alembic.ini || true
+          echo "=== backend/alembic directory ==="
+          ls -la backend/alembic || true
           echo "=== backend/requirements.txt ==="
           ls -la backend/requirements.txt || true
           echo "=== backend/Dockerfile (first 120 lines) ==="
