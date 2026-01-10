@@ -43,6 +43,18 @@ jobs:
       - name: Run smoke demo
         run: ./scripts/smoke_demo.sh
 
+      - name: Show compose logs on failure
+        if: ${{ failure() }}
+        run: |
+          echo "=== docker compose ps ==="
+          docker compose -f docker-compose.demo.yml ps
+          echo "=== backend logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color backend || true
+          echo "=== db logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color db || true
+          echo "=== frontend logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color frontend || true
+
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.demo.yml down -v --remove-orphans
