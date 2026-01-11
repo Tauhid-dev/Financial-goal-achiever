@@ -10,7 +10,7 @@ COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Alembic configuration
-COPY alembic.ini /app/alembic.ini
+COPY alembic/alembic.ini /app/alembic.ini
 COPY alembic /app/alembic
 
 # Application code
