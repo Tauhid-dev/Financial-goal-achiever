@@ -18,8 +18,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: fga_demo_backend
     depends_on:
       db:
@@ -31,11 +31,11 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "60"
     ports:
       - "8000:8000"
-      command: >
-        /bin/sh -c "
-          python -m alembic -c /app/alembic.ini upgrade head &&
-          python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
-        "
+    command: >
+      /bin/sh -c "
+        python -m alembic -c /app/alembic.ini upgrade head &&
+        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
