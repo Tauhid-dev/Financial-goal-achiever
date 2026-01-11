@@ -33,8 +33,27 @@ services:
       - "8000:8000"
     command: >
       /bin/sh -c "
-        python -m alembic -c /app/alembic.ini upgrade head &&
-        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+        set -e;
+        echo 'Waiting for DB...';
+        for i in $(seq 1 30); do
+          python - <<'PY'
+import os, socket, sys
+host=os.getenv('DB_HOST','db')
+port=int(os.getenv('DB_PORT','5432'))
+s=socket.socket()
+s.settimeout(1)
+try:
+  s.connect((host,port)); s.close()
+  sys.exit(0)
+except Exception:
+  sys.exit(1)
+PY
+          if [ $? -eq 0 ]; then break; done; sleep 2
+        done;
+        echo 'Running migrations...';
+        python -m alembic -c /app/alembic.ini upgrade head;
+        echo 'Starting API...';
+        python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
       "
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

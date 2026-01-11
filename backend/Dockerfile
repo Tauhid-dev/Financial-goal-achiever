@@ -10,11 +10,11 @@ COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Alembic configuration
-COPY alembic.ini /app/alembic.ini
-COPY alembic /app/alembic
+COPY backend/alembic.ini /app/alembic.ini
+COPY backend/alembic /app/alembic
 
 # Application code
-COPY backend/app /app/app
+COPY backend/app /app/backend/app
 
 # Ensure the container can import the backend package
 ENV PYTHONPATH=/app
@@ -22,4 +22,4 @@ ENV PYTHONPATH=/app
 USER appuser
 EXPOSE 8000
 
-CMD ["python","-m","uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
+CMD ["python","-m","uvicorn","backend.app.main:app","--host","0.0.0.0","--port","8000"]
