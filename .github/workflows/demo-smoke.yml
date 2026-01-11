@@ -28,16 +28,21 @@ jobs:
       - name: Make scripts executable
         run: chmod +x scripts/smoke_demo.sh scripts/demo_reset.sh
 
-      - name: Preflight checks (ensure build context visibility)
-        run: |
-          echo "=== alembic.ini ==="
-          ls -la alembic.ini || true
-          echo "=== alembic directory ==="
-          ls -la alembic || true
-          echo "=== backend/Dockerfile (first 120 lines) ==="
-          sed -n '1,120p' backend/Dockerfile
-          echo "=== docker‑compose config ==="
-          docker compose -f docker-compose.demo.yml config
+- name: Preflight checks (ensure build context visibility)
+  run: |
+    echo "=== alembic.ini ==="
+    ls -la alembic.ini || true
+    echo "=== alembic directory ==="
+    ls -la alembic || true
+    echo "=== backend/Dockerfile (first 120 lines) ==="
+    sed -n '1,120p' backend/Dockerfile
+    echo "=== docker‑compose config ==="
+    docker compose -f docker-compose.demo.yml config
+    # Additional file existence checks
+    test -f backend/Dockerfile
+    test -f backend/requirements.txt
+    test -f backend/alembic.ini
+    test -d backend/alembic
 
       - name: Start demo stack
         run: docker compose -f docker-compose.demo.yml up --build -d
