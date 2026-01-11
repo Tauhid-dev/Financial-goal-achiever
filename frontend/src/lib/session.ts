@@ -1,62 +1,49 @@
 import { apiFetch, meAPI } from "./api";
+import { Scope } from "./types";
 
-/**
- * Session helper – determines the current user and default family.
- * Stores the family ID in localStorage under "family_id".
- */
+export const getScope = (): Scope | null => {
+  const id = localStorage.getItem("active_scope_id");
+  const kind = (localStorage.getItem("active_scope_kind") as Scope["kind"]) ?? "family";
+  return id ? { id, kind } : null;
+}
 
-export const FAMILY_ID_KEY = "family_id";
-
-/**
- * Retrieve stored family ID.
- */
-export const getFamilyId = (): string | null => {
-  return localStorage.getItem(FAMILY_ID_KEY);
+export const setScope = (scope: Scope): void => {
+  localStorage.setItem("active_scope_id", scope.id);
+  localStorage.setItem("active_scope_kind", scope.kind);
 };
 
 /**
- * Store family ID.
+ * Initialise session – verifies auth token and resolves the default scope.
+ * Returns a Scope (family MVP now).
  */
-export const setFamilyId = (familyId: string): void => {
-  localStorage.setItem(FAMILY_ID_KEY, familyId);
+export const ensureSession = async (): Promise<Scope> => {
+  // Verify token via /api/auth/me (throws on 401)
+  await meAPI();
+
+  // Check if we already have a stored scope
+  const stored = getScope();
+  if (stored) {
+    return stored;
+  }
+
+  // Fetch list of scopes
+  const scopes = await apiFetch("/api/scopes");
+if (Array.isArray(scopes) && scopes.length > 0) {
+    const first = scopes[0];
+    const scope: Scope = {
+      id: String(first.id),
+      kind: (first.kind as Scope["kind"]) ?? "family"
+    };
+    setScope(scope);
+    return scope;
+}
+
+  // Fallback to legacy default‑family endpoint
+const data = await apiFetch("/api/me/default-family");
+const scope: Scope = {
+  id: String(data.family_id),
+  kind: "family"
 };
-
-/**
- * Initialise session:
- *  - Verify token via /api/auth/me (throws if invalid)
- *  - Attempt to fetch default family via /api/me/default-family
- *    (fallback to /api/families/default if endpoint missing)
- *  - Store family ID for later use.
- */
-export const ensureSession = async (): Promise<{ user: any; familyId: string }> => {
-  // Get current user (throws on 401)
-  const user = await meAPI();
-
-  // Check if familyId already stored
-  let familyId = getFamilyId();
-  if (familyId) {
-    return { user, familyId };
-  }
-
-  // Try default-family endpoint
-  try {
-    const data = await apiFetch("/api/me/default-family");
-    if (data && data.id) {
-      familyId = String(data.id);
-      setFamilyId(familyId);
-      return { user, familyId };
-    }
-  } catch {
-    // ignore, fallback
-  }
-
-  // Fallback to families/default
-  const fallback = await apiFetch("/api/families/default");
-  if (fallback && fallback.id) {
-    familyId = String(fallback.id);
-    setFamilyId(familyId);
-    return { user, familyId };
-  }
-
-  throw new Error("Unable to determine default family ID");
+setScope(scope);
+return scope;
 };

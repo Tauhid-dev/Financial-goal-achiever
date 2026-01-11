@@ -1,5 +1,11 @@
 from sqlalchemy import select, exists
+from ..models.family import Family
+from ..models.user import User
 from ..models.membership import Membership
+from ..models.family import Family
+from ..models.user import User
+from ..models.family import Family
+from ..models.user import User
 
 async def add_member(session, user_id: str, family_id: str, role: str = "owner") -> Membership:
     """
@@ -29,6 +35,18 @@ async def get_default_family_id_for_user(session, user_id: str):
     )
     row = result.first()
     return row[0] if row else None
+
+async def list_user_families(session, user_id: str):
+    """
+    Return a list of (family_id, family_name) tuples for the given user.
+    """
+    stmt = (
+        select(Membership.family_id, Family.name)
+        .join(Family, Family.id == Membership.family_id)
+        .where(Membership.user_id == user_id)
+    )
+    result = await session.execute(stmt)
+    return result.all()
 
 async def user_belongs_to_family(session, user_id: str, family_id: str) -> bool:
     """

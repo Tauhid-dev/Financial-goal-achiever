@@ -1,0 +1,71 @@
+name: Demo Smoke Test
+
+on:
+  push:
+    branches: [main, Financial-goal]
+  pull_request:
+    branches: [main, Financial-goal]
+
+jobs:
+  demo-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Show Docker versions
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Make scripts executable
+        run: chmod +x scripts/smoke_demo.sh scripts/demo_reset.sh
+
+      - name: Preflight checks (ensure build context visibility)
+        run: |
+          echo "=== alembic.ini ==="
+          ls -la alembic.ini || true
+          echo "=== alembic directory ==="
+          ls -la alembic || true
+          echo "=== backend/Dockerfile (first 120 lines) ==="
+          sed -n '1,120p' backend/Dockerfile
+          echo "=== docker‑compose config ==="
+          docker compose -f docker-compose.demo.yml config
+
+      - name: Start demo stack
+        run: docker compose -f docker-compose.demo.yml up --build -d
+
+      - name: Show build contexts and Dockerfile snippets
+        run: |
+          echo "=== docker-compose.demo.yml (first 40 lines) ==="
+          sed -n '1,40p' docker-compose.demo.yml
+          echo "=== backend/Dockerfile (first 40 lines) ==="
+          sed -n '1,40p' backend/Dockerfile
+          echo "=== frontend/Dockerfile (first 40 lines) ==="
+          sed -n '1,40p' frontend/Dockerfile
+
+      - name: Run smoke demo
+        run: ./scripts/smoke_demo.sh
+
+      - name: Show compose logs on failure
+        if: ${{ always() }}
+        run: |
+          echo "=== docker compose ps ==="
+          docker compose -f docker-compose.demo.yml ps
+          echo "=== backend logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color backend || true
+          echo "=== db logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color db || true
+          echo "=== frontend logs ==="
+          docker compose -f docker-compose.demo.yml logs --no-color frontend || true
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.demo.yml down -v --remove-orphans

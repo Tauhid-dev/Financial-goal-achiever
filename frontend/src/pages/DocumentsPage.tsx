@@ -2,35 +2,51 @@ import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listDocuments, uploadDocument } from '../lib/endpoints';
 import { Document } from '../lib/types';
+import { Scope } from '../lib/types';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
 
 export const DocumentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [currentScope, setCurrentScope] = useState<Scope | null>(null);
 
-  const fetchDocs = async (familyId: string) => {
-    const docs = await listDocuments(familyId);
+  const fetchDocs = async (scope?: Scope) => {
+    const effectiveScope = scope ?? (await ensureSession());
+    setCurrentScope(effectiveScope);
+    const docs = await listDocuments(effectiveScope);
     setDocuments(docs);
   };
 
   const handleUpload = async () => {
     if (!file) return;
+    // Client‑side PDF validation
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Only PDF files are allowed');
+      return;
+    }
+    setUploading(true);
     try {
-      const { familyId } = await ensureSession();
-      await uploadDocument(familyId, file);
-      await fetchDocs(familyId);
+      const scope = await ensureSession();
+      await uploadDocument(scope, file);
+      await fetchDocs(scope);
       setFile(null);
     } catch (err: any) {
-      setError(err.message);
+      // Preserve existing error message; could be auth, validation, or generic
+      setError(err.message ?? 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
   useEffect(() => {
     const init = async () => {
       try {
-        const { familyId } = await ensureSession();
-        await fetchDocs(familyId);
+        const scope = await ensureSession();
+        await fetchDocs(scope);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -40,8 +56,8 @@ export const DocumentsPage: React.FC = () => {
     init();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (loading) return <Spinner label="Loading documents…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => fetchDocs()} />;
 
   return (
     <div>
@@ -59,8 +75,8 @@ export const DocumentsPage: React.FC = () => {
           accept="application/pdf"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
-        <button onClick={handleUpload} disabled={!file}>
-          Upload PDF
+        <button onClick={handleUpload} disabled={!file || uploading}>
+          {uploading ? 'Uploading…' : 'Upload PDF'}
         </button>
       </div>
     </div>

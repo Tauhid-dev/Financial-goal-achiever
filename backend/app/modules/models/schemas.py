@@ -120,3 +120,13 @@ class DefaultFamilyResponseSchema(BaseModel):
     family_id: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class ScopeSchema(BaseModel):
+    """
+    Generic scope representation.
+    """
+    id: str
+    type: str  # literal "family"
+    name: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

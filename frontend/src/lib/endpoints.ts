@@ -4,28 +4,43 @@ import {
   GoalWithProjection,
   MonthlySummary,
   Document,
+  Scope,
+  InsightsResponse,
 } from "./types";
+import { familyPath } from "./scope";
+
+export const SCOPES_LIST = "/api/scopes";
 
 /**
  * Goals endpoints
  */
-export const listGoals = async (familyId: string): Promise<GoalWithProjection[]> => {
-  return apiFetch(`/api/goals/${familyId}`);
+export const listGoals = async (scope: Scope): Promise<GoalWithProjection[]> => {
+  return apiFetch(familyPath("goals", scope));
 };
 
+export const listScopes = async (): Promise<Scope[]> => {
+  return apiFetch(SCOPES_LIST);
+};
+
+export const getDefaultScope = async (): Promise<Scope> => {
+  return apiFetch("/api/scopes/default");
+};
+
+/* Removed local familyPath helper – use the one from scope.ts */
+
 export const createGoal = async (
-  familyId: string,
+  scope: Scope,
   payload: GoalCreate
 ): Promise<GoalWithProjection> => {
-  return apiFetch(`/api/goals/${familyId}`, {
+  return apiFetch(familyPath("goals", scope), {
     method: "POST",
     body: JSON.stringify(payload),
     headers: { "Content-Type": "application/json" },
   });
 };
 
-export const deleteGoal = async (familyId: string, goalId: string): Promise<void> => {
-  await apiFetch(`/api/goals/${familyId}/${goalId}`, {
+export const deleteGoal = async (scope: Scope, goalId: string): Promise<void> => {
+  await apiFetch(`${familyPath("goals", scope)}/${goalId}`, {
     method: "DELETE",
   });
 };
@@ -33,21 +48,21 @@ export const deleteGoal = async (familyId: string, goalId: string): Promise<void
 /**
  * Summary endpoints
  */
-export const listSummaries = async (familyId: string): Promise<MonthlySummary[]> => {
-  return apiFetch(`/api/summary/${familyId}`);
+export const listSummaries = async (scope: Scope): Promise<MonthlySummary[]> => {
+  return apiFetch(familyPath("summary", scope));
 };
 
 /**
  * Document endpoints
  */
-export const listDocuments = async (familyId: string): Promise<Document[]> => {
-  return apiFetch(`/api/documents/${familyId}`);
+export const listDocuments = async (scope: Scope): Promise<Document[]> => {
+  return apiFetch(familyPath("documents", scope));
 };
 
-export const uploadDocument = async (familyId: string, file: File): Promise<Document> => {
+export const uploadDocument = async (scope: Scope, file: File): Promise<Document> => {
   const formData = new FormData();
   formData.append("file", file);
-  return apiFetch(`/api/documents/${familyId}`, {
+  return apiFetch(familyPath("documents", scope), {
     method: "POST",
     body: formData,
   });
@@ -57,17 +72,17 @@ export const uploadDocument = async (familyId: string, file: File): Promise<Docu
  * Transactions endpoint – returns a list of transactions for a family.
  */
 export const listTransactions = async (
-  familyId: string,
+  scope: Scope,
   params?: { month?: string; limit?: number; offset?: number }
 ): Promise<any[]> => {
   const query = params ? `?${new URLSearchParams(params as any).toString()}` : "";
-  return apiFetch(`/api/transactions/${familyId}${query}`);
+  return apiFetch(`${familyPath("transactions", scope)}${query}`);
 };
 
 /**
  * Placeholder for insights – returns unknown type
  */
-export const getInsights = async (familyId: string, params?: any): Promise<any> => {
-  const query = params ? `?${new URLSearchParams(params as any).toString()}` : "";
-  return apiFetch(`/api/insights/${familyId}${query}`);
+export const getInsights = async (scope: Scope, month?: string): Promise<InsightsResponse> => {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  return apiFetch(`${familyPath("insights", scope)}${query}`);
 };

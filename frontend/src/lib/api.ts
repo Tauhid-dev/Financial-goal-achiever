@@ -19,7 +19,20 @@ export function clearToken(): void {
 }
 
 // Generic request helper
-async function request(path: string, opts: RequestInit = {}): Promise<any> {
+class ApiError extends Error {
+  code?: string;
+  status?: number;
+  details?: any;
+  constructor(message: string, status?: number, code?: string, details?: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+async function request<T = any>(path: string, opts: RequestInit = {}): Promise<T | null> {
   // Determine request body handling and headers
   const isFormData = typeof FormData !== "undefined" && opts.body instanceof FormData;
 
@@ -59,20 +72,46 @@ async function request(path: string, opts: RequestInit = {}): Promise<any> {
   const response = await fetch(`${BASE_URL}${path}`, fetchOptions);
 
   if (!response.ok) {
+    // Normalize error response
+    const errorText = await response.text();
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(errorText);
+    } catch {
+      // ignore parse error
+    }
+    const normalized = {
+      status: response.status,
+      code: response.status === 401 ? "UNAUTHORIZED" : parsed?.code || "UNKNOWN",
+      message: parsed?.message || errorText || `HTTP ${response.status}`,
+      details: parsed?.details,
+    };
     if (response.status === 401) {
       clearToken();
     }
-    const errorText = await response.text();
-    throw new Error(`API error ${response.status}: ${errorText}`);
+    throw new ApiError(normalized.message, normalized.status, normalized.code, normalized);
   }
 
   const text = await response.text();
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // If response is not JSON, return raw text
+    return (text as unknown) as T;
+  }
 }
 
 // Exported wrapper for compatibility
 export async function apiFetch(path: string, opts: RequestInit = {}): Promise<any> {
   return request(path, opts);
+}
+
+/**
+ * Helper to identify unauthorized errors.
+ */
+export function isUnauthorized(err: any): boolean {
+  return err && err.code === "UNAUTHORIZED";
 }
 
 // Auth APIs

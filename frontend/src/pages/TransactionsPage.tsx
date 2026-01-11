@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ensureSession } from '../lib/session';
 import { listTransactions } from '../lib/endpoints';
-import { Transaction } from '../lib/types';
+import Spinner from '../components/Spinner';
+import ErrorBanner from '../components/ErrorBanner';
+import { Transaction, Scope } from '../lib/types';
 
 export const TransactionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -10,15 +12,18 @@ export const TransactionsPage: React.FC = () => {
   const [offset, setOffset] = useState(0);
   const limit = 20;
   const [monthFilter, setMonthFilter] = useState<string>('');
+  const [currentScope, setCurrentScope] = useState<Scope | null>(null);
 
-  const fetchTxns = async (familyId: string) => {
-    const params: any = { limit, offset };
-    if (monthFilter) {
-      params.month = monthFilter;
-    }
-    const data = await listTransactions(familyId, params);
-    setTransactions(data);
-  };
+const fetchTxns = async (scope?: Scope) => {
+  const effectiveScope = scope ?? (await ensureSession());
+  setCurrentScope(effectiveScope);
+  const params: any = { limit, offset };
+  if (monthFilter) {
+    params.month = monthFilter;
+  }
+  const data = await listTransactions(effectiveScope, params);
+  setTransactions(data);
+};
 
   const nextPage = () => setOffset(prev => prev + limit);
   const prevPage = () => setOffset(prev => Math.max(prev - limit, 0));
@@ -26,8 +31,8 @@ export const TransactionsPage: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const { familyId } = await ensureSession();
-        await fetchTxns(familyId);
+        const scope = await ensureSession();
+        await fetchTxns(scope);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -37,8 +42,8 @@ export const TransactionsPage: React.FC = () => {
     init();
   }, [offset, monthFilter]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (loading) return <Spinner label="Loading transactions…" />;
+  if (error) return <ErrorBanner error={error} onRetry={() => fetchTxns()} />;
 
   return (
     <div>

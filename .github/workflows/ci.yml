@@ -25,3 +25,9 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+      - name: Install frontend dependencies
+        run: npm -C frontend ci
+      - name: Run frontend tests
+        run: npm -C frontend test --silent
+      - name: Build frontend
+        run: npm -C frontend run build

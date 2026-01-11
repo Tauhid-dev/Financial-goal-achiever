@@ -14,3 +14,9 @@ class UserRead(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+# New schema for the scopes endpoint
+class ScopeItemSchema(BaseModel):
+    type: str
+    id: str
+    name: str | None = None
