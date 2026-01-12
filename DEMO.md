@@ -1,5 +1,10 @@
 # First Demo – Financial Goal Achiever
 
+## Running on OCI (demo‑only)
+
+See the [OCI demo runbook](deploy/OCI_DEMO.md) and the bootstrap script
+`scripts/oci_demo_bootstrap.sh` for step‑by‑step instructions.
+
 ## Prerequisites
 - **Python 3.13+** (or 3.11+)
 - **Node 18+** and **npm**

@@ -27,3 +27,5 @@ Resources/
 **/Resources/
 *.pyc
 __pycache__/
+# .env.demo should not be committed
+.env.demo
